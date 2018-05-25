@@ -1,0 +1,310 @@
+#!/usr/bin/python3
+#-*- encoding: Utf-8 -*-
+from subprocess import Popen, run, PIPE, DEVNULL, STDOUT, TimeoutExpired
+from socket import socket, AF_INET, SOCK_STREAM
+from os.path import realpath, dirname
+from sys import stderr, platform
+from logging import warning
+from shutil import which
+from time import sleep
+from re import search
+
+try:
+    from os import setpgrp
+except ImportError:
+    setpgrp = None
+
+from inputs._hdlc_mixin import HdlcMixin
+from inputs._base_input import BaseInput
+
+INPUTS_DIR = dirname(realpath(__file__))
+ROOT_DIR = realpath(INPUTS_DIR + '/..')
+ADB_BRIDGE_DIR = realpath(INPUTS_DIR + '/adb_bridge')
+ADB_BIN_DIR = realpath(INPUTS_DIR + '/external/adb')
+
+ANDROID_TMP_DIR = '/data/local/tmp'
+
+"""
+    This class implements reading Qualcomm DIAG data from a the /dev/diag
+    character device, on a remote Android device connected through ADB.
+    
+    For this, it uploads the C program located in "./adb_bridge/" which
+    creates a TCP socket acting as a proxy to /dev/diag.
+"""
+
+QCSUPER_TCP_PORT = 43555
+
+if platform in ('cygwin', 'win32'):
+    adb_exe = ADB_BIN_DIR + '/adb_windows.exe'
+elif platform == 'darwin':
+    adb_exe = which('adb') or ADB_BIN_DIR + '/adb_macos'
+else:
+    adb_exe = which('adb') or ADB_BIN_DIR + '/adb_linux'
+
+
+class AdbConnector(HdlcMixin, BaseInput):
+    
+    def __init__(self):
+        
+        self.su_command = '%s'
+        
+        self.ADB_TIMEOUT = 10
+        
+        # Send batch commands to check for the presence of /dev/diag through
+        # adb, and for the availability of the "su" command
+        
+        bash_output = self.adb_shell(
+            'test -w /dev/diag; echo DIAG_NOT_WRITEABLE=$?; ' +
+            'test -e /dev/diag; echo DIAG_NOT_EXISTS=$?; ' +
+            'su -c id'
+        )
+        
+        # Check for the presence of /dev/diag
+        
+        if not search('DIAG_NOT_EXISTS=[01]', bash_output):
+            
+            print('Could not run a bash command your phone, is adb functional?')
+            
+            exit(bash_output)
+        
+        # If writeable, continue
+        
+        elif 'DIAG_NOT_WRITEABLE=0' in bash_output:
+            
+            pass
+        
+        # If not present, raise an error
+        
+        elif 'DIAG_NOT_EXISTS=1' in bash_output:
+            
+            exit('Could not find /dev/diag, does your phone have a Qualcomm chip?')
+        
+        # If present but not writeable, check for root
+        
+        elif 'uid=0' in bash_output:
+            
+            self.su_command = 'su -c "%s"'
+        
+        elif 'uid=0' in self.adb_shell('su 0,0 sh -c "id"'):
+            
+            self.su_command = 'su 0,0 sh -c "%s"'
+    
+        else:
+            
+            # "adb shell su" didn't work, try "adb root"
+            
+            adb = run([adb_exe, 'root'], stdout = PIPE, stderr = STDOUT, stdin = DEVNULL)
+            
+            if b'cannot run as root' in adb.stdout:
+                
+                exit('Could not get root to adb, is your phone rooted?')
+        
+            run([adb_exe, 'wait-for-device'], stdin = DEVNULL, check = True)
+        
+        # Upload the adb_bridge
+        
+        adb = run([adb_exe, 'push', ADB_BRIDGE_DIR + '/adb_bridge', ANDROID_TMP_DIR],
+            
+            stdin = DEVNULL, stdout = PIPE, stderr = STDOUT
+        )
+    
+        if b'error' in adb.stdout or adb.returncode != 0:
+            
+            exit(adb.stdout.decode('utf8'))
+        
+        # Launch the adb_bridge
+        
+        self._relaunch_adb_bridge()
+
+        self.msg_buffer = b''
+        
+        super().__init__()
+    
+    def _relaunch_adb_bridge(self):
+        
+        if hasattr(self, 'adb_proc'):
+            self.adb_proc.terminate()
+        
+        self.adb_shell(
+            'killall -q adb_bridge; ' +
+            'chmod 755 ' + ANDROID_TMP_DIR + '/adb_bridge'
+        )
+        
+        run([adb_exe, 'forward', 'tcp:' + str(QCSUPER_TCP_PORT), 'tcp:' + str(QCSUPER_TCP_PORT)], check = True, stdin = DEVNULL)
+        
+        self.adb_proc = Popen([adb_exe, 'shell', self.su_command % (ANDROID_TMP_DIR + '/adb_bridge')],
+            stdin = DEVNULL, stdout = PIPE, stderr = STDOUT,
+            preexec_fn = setpgrp,
+            bufsize = 0, universal_newlines = True
+        )
+    
+        for line in self.adb_proc.stdout:
+            
+            if 'Connection to Diag established' in line:
+                
+                break
+            
+            else:
+                
+                stderr.write(line)
+                stderr.flush()
+
+        self.socket = socket(AF_INET, SOCK_STREAM)
+        
+        try:
+            
+            self.socket.connect(('localhost', QCSUPER_TCP_PORT))
+        
+        except Exception:
+            
+            self.adb_proc.terminate()
+            
+            exit('Could not communicate with the adb_bridge through TCP')
+        
+        self.received_first_packet = False
+    
+    """
+        This utility function tries to run a command to adb,
+        raising an exception when it is unreachable.
+        
+        :param command: A shell command (string)
+        
+        :returns The combined stderr and stdout from "adb shell" (string)
+    """
+    
+    def adb_shell(self, command):
+        
+        try:
+            
+            adb = run([adb_exe, 'shell', self.su_command % command],
+                
+                stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
+            )
+        
+        except TimeoutExpired:
+            
+            exit('Communication with adb timed out, is your phone displaying ' +
+                'a confirmation dialog?')
+
+        if b'error' in adb.stdout or adb.returncode != 0:
+    
+            if b'device not found' in adb.stdout or b'no devices' in adb.stdout:
+            
+                exit('Could not connect to the adb, is your phone plugged with USB '
+                    + 'debugging enabled?')
+            
+            elif b'confirmation dialog on your device' in adb.stdout:
+            
+                exit('Could not connect to the adb, is your phone displaying ' +
+                    'a confirmation dialog?')
+            
+            else:
+                
+                print('Could not connect to your device through adb')
+            
+            exit(adb.stdout.decode('utf8'))
+        
+        return adb.stdout.decode('utf8').strip()
+    
+    def __del__(self):
+        
+        try:
+            
+            if hasattr(self, 'adb_proc'):
+
+                self.adb_proc.terminate()
+        
+        except Exception:
+            
+            pass
+    
+    def send_request(self, msg_type, msg_payload):
+        
+        raw_payload = self.hdlc_encapsulate(bytes([msg_type]) + msg_payload)
+        
+        self.socket.send(raw_payload)
+    
+    def get_gps_location(self):
+        
+        lat = None
+        lng = None
+        
+        gps_info = run([adb_exe, 'shell', 'dumpsys', 'location'], stdout = PIPE)
+        gps_info = gps_info.stdout.decode('utf8')
+        
+        gps_info = search('(\d+\.\d+),(\d+\.\d+)', gps_info)
+        if gps_info:
+            lat, lng = map(float, gps_info.groups())
+        
+        return lat, lng
+    
+    def read_loop(self):
+        
+        while True:
+            
+            while self.TRAILER_CHAR not in self.msg_buffer:
+                
+                # Read message from the TCP socket
+                
+                socket_read = self.socket.recv(1024 * 1024 * 10)
+                
+                if not socket_read and platform in ('cygwin', 'win32'):
+                    
+                    # Windows user hit Ctrl+C from the terminal, which
+                    # subsequently propagated to adb_bridge and killed it.
+                    # Try to restart the subprocess in order to perform
+                    # the deinitialization sequence well.
+                    
+                    self._relaunch_adb_bridge()
+                    
+                    # If restarting adb succeeded, this confirms the idea
+                    # than the user did Ctrl+C, so we propagate the actual
+                    # Ctrl+C to the main thread.
+                    
+                    if not self.program_is_terminating:
+                        
+                        with self.shutdown_event:
+                        
+                            self.shutdown_event.notify()
+                    
+                    socket_read = self.socket.recv(1024 * 1024 * 10)
+                
+                if not socket_read:
+                    
+                    print('\nThe connection to the adb bridge was closed, or ' +
+                        'preempted by another QCSuper instance')
+                    
+                    exit()
+                
+                self.msg_buffer += socket_read
+            
+            while self.TRAILER_CHAR in self.msg_buffer:
+                
+                # Parse frame
+                
+                raw_payload, self.msg_buffer = self.msg_buffer.split(self.TRAILER_CHAR, 1)
+                
+                # Decapsulate and dispatch
+                
+                try:
+                
+                    unframed_message = self.hdlc_decapsulate(
+                        payload = raw_payload + self.TRAILER_CHAR,
+                        
+                        raise_on_invalid_frame = not self.received_first_packet
+                    )
+                
+                except self.InvalidFrameError:
+                    
+                    # The first packet that we receive over the Diag input may
+                    # be partial
+                    
+                    continue
+                
+                finally:
+                    
+                    self.received_first_packet = True
+                
+                self.dispatch_received_diag_packet(unframed_message)
+
+            
