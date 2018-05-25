@@ -27,7 +27,7 @@ QCSuper needs to deal to multiple sources of input:
 
 All this requires a form of concurrency to be acheived: either threading, or a way to poll on descriptors through an event loop.
 
-The design ease/simplicity tradeoff I have chosen was to use threading (but I'm open to rework the architecture if someone has something else to propose). Polling on both a serial port and a featureful command prompt or thread queue (for example) is not doable easily in a multi-platform way, and using asyncio seemed to add some design and syntaxing overhead/external libraries in the equation.
+The design ease/simplicity tradeoff I have chosen was to use threading (but I'm open to rework the architecture if someone has something else to propose). Polling on both a serial port and a featureful command prompt or thread queue (for example) is not doable easily in a multi-platform way, and using asyncio seemed to add some design and syntaxing overhead/external libraries to the equation.
 
 ### Threading model
 
@@ -41,7 +41,7 @@ QCSuper makes uses of different threads:
 
 A module is a Python class which may expose different methods:
 
-* `__init__`: will receive the input object as its first argument, and optionally other arguments from the command line or interactive prompt (passed in order from the entry point `qcsuper.py`).
+* `__init__`: will receive the input object as its first argument, and optionally other arguments from the command line or interactive prompt (passed in sequence from the entry point `qcsuper.py`).
 * `on_init`: called when the connection to the Diag device was established. Not called when the input is not a device but a file containing recorded log data.
 * Callbacks triggered by a read on the input source:
   * `on_log`: called when an asynchronous response Diag protocol raw "log" was received.
@@ -56,4 +56,12 @@ When using the interactive prompt (`--cli`), the moment where the `on_init` call
 
 ### Inputs API
 
-To be documented
+A module is a Python class which may expose different methods:
+
+* `__init__`: will optionally receive arguments from the command line or interactive prompt (passed in sequence from the entry point `qcsuper.py`).
+* `send_request`: this function will be called when a module wants to send a Diag request packet.
+* `read_loop`: Diag responses packets will be read and dispatched from here.
+
+Inputs inherit from the `BaseInput` class which exposes a method called `send_recv`, allowing to write a request then read the response, wrapping transparently thread synchronization primitives.
+
+`send_recv` is most likely the only method of an input to be called directly from a module.

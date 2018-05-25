@@ -116,7 +116,7 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         self._relaunch_adb_bridge()
 
-        self.msg_buffer = b''
+        self.packet_buffer = b''
         
         super().__init__()
     
@@ -218,9 +218,9 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             pass
     
-    def send_request(self, msg_type, msg_payload):
+    def send_request(self, packet_type, packet_payload):
         
-        raw_payload = self.hdlc_encapsulate(bytes([msg_type]) + msg_payload)
+        raw_payload = self.hdlc_encapsulate(bytes([packet_type]) + packet_payload)
         
         self.socket.send(raw_payload)
     
@@ -242,7 +242,7 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         while True:
             
-            while self.TRAILER_CHAR not in self.msg_buffer:
+            while self.TRAILER_CHAR not in self.packet_buffer:
                 
                 # Read message from the TCP socket
                 
@@ -276,13 +276,13 @@ class AdbConnector(HdlcMixin, BaseInput):
                     
                     exit()
                 
-                self.msg_buffer += socket_read
+                self.packet_buffer += socket_read
             
-            while self.TRAILER_CHAR in self.msg_buffer:
+            while self.TRAILER_CHAR in self.packet_buffer:
                 
                 # Parse frame
                 
-                raw_payload, self.msg_buffer = self.msg_buffer.split(self.TRAILER_CHAR, 1)
+                raw_payload, self.packet_buffer = self.packet_buffer.split(self.TRAILER_CHAR, 1)
                 
                 # Decapsulate and dispatch
                 

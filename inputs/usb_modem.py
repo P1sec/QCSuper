@@ -90,9 +90,9 @@ class UsbModemConnector(HdlcMixin, BaseInput):
         
         super().__init__()
     
-    def send_request(self, msg_type, msg_payload):
+    def send_request(self, packet_type, packet_payload):
         
-        raw_payload = self.hdlc_encapsulate(bytes([msg_type]) + msg_payload)
+        raw_payload = self.hdlc_encapsulate(bytes([packet_type]) + packet_payload)
         
         self.serial.write(raw_payload)
     
