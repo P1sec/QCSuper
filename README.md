@@ -195,9 +195,9 @@ Memory dumping options:
 
 You can use QCSuper with an USB modem exposing a Diag port using the `--usb-modem <device>` option, where `<device>` is the name of the pseudo-serial device on Linux (such as `/dev/ttyUSB0`, `/dev/ttyHS2` and other possibilites) or of the COM port on Windows (such as `COM3`).
 
-Please note that you need to use QCSuper as root in order to be able to talk with a serial port on Linux, except if you have changed your filesystem privileges.
+Please note that you need to use QCSuper as root in order to be able to use this mode, notably for handling serial port interference.
 
-If you don't know which devices under `/dev` exposes the Diag port, you may have to try multiple of these. You can try to auto-detect it by stopping the ModemManager daemon, and using the following command: `sudo ModemManager --debug 2>&1 | grep -i 'port is QCDM-capable'` then Ctrl-C.
+If you don't know which devices under `/dev` exposes the Diag port, you may have to try multiple of these. You can try to auto-detect it by stopping the ModemManager daemon (`sudo systemctl stop ModemManager`), and using the following command: `sudo ModemManager --debug 2>&1 | grep -i 'port is QCDM-capable'` then Ctrl-C.
 
 Please note that if you're not able to use your device with for example ModemManager in first place, it is likely that it is not totally setup and that it will not work neither with QCSuper. A few possible gotchas are:
 
@@ -211,17 +211,15 @@ If your Qualcomm-based USB device doesn't expose a Diag port by default, you may
 AT$QCDMG
 ```
 
-Please note that only one client can communicate with the Diag port at the same time. Thus, QCSuper will not work if ModemManager is connected to your Diag port at the same time, even though there's no straigtforward way to prevent ModemManager to find your Diag device and connect to it.
+Please note that only one client may communicate with the Diag port at the same time. This applies to two QCSuper instances, or QCSuper and ModemManager instances.
 
-So, when using QCSuper with your modem on Linux, you must either stop ModemManager, either play with permissions/groups in order to prevent it to open the corresponding device, either try to close the descriptor open by ModemManager using gdb (this will only work if ModemManager didn't manage to exchange valid Diag data since it was started, otherwise it will hang).
-
-By default, QCSuper will detect that ModemManager is running and has opened the descriptor for your modem's device when it's the case, and will offer to stop its process.
+If ModemManager is active on your system, QCSuper will attempt to dynamically add an udev rule for preventing it to access the Diag port and restart its daemon, as it's currently the best way to achieve this. It will suppress this rule when closed.
 
 ## Related tools using the Diag protocol
 
 There are a few other open tools implementing bits of the Diag protocol, serving various purposes:
 
-* [ModemManager](https://github.com/endlessm/ModemManager): the principal daemon enabling to use USB modems on Linux, implements bits of the Diag protocol (labelled as QCDM) in order to retrieve basic information about USB modem devices. (That's why it may interfere when using --usb-modem and QCSuper will propose to shut it down)
+* [ModemManager](https://github.com/endlessm/ModemManager): the principal daemon enabling to use USB modems on Linux, implements bits of the Diag protocol (labelled as QCDM) in order to retrieve basic information about USB modem devices.
 * [SnoopSnitch](https://play.google.com/store/apps/details?id=de.srlabs.snoopsnitch&hl=fr) (specifically [gsm-parser](https://github.com/E3V3A/gsm-parser)): chiefly an Android application whose purpose is to detect potential attacks on the radio layer (IMSI catcher, fake BTS...). It also have a secondary feature to capture some signalling traffic to PCAP, which does not provide exactly the same thing as QCSuper (LTE traffic isn't encapsulated in GSMTAP for example, device support may be different).
   * [diag-parser](https://github.com/moiji-mobile/diag-parser): A Linux tool derivate from the PCAP generation feature from SnoopSnitch, somewhat improved, designed to work with USB modems.
 * [MobileInsight](http://www.mobileinsight.net/): this Android application intends to parse all kinds of logs output by Qualcomm and Mediatek devices (not only those containing signalling information, but also proprietary debugging structures), and dumping these to a specific XML representation format. Does not provide user-facing PCAPs (but formerly used Wireshark as a backend for converting certain protocol information to XML).

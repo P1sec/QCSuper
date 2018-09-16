@@ -60,7 +60,7 @@ class CommandLineInterface:
                     
                     raise EOFError
             
-            except EOFError:
+            except (EOFError, IOError):
                 
                 # Interrupt the main and the current thread
                 
