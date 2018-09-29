@@ -203,7 +203,7 @@ Please note that if you're not able to use your device with for example ModemMan
 
   * You didn't apply the proper [mode switching](https://wiki.archlinux.org/index.php/USB_3G_Modem#Mode_switching) command for your device.
   
-  * If you bought a device that previously had a SIM from a different operator, your device may be sim-locked. You may have to use the unlock code from the former operator and submit it to the device like you would do for `sudo mmcli -i 0 --pin=<your_unlock_code>`
+  * If you bought a device that previously had a SIM from a different operator, your device may be sim-locked. You may have to use the unlock code from the former operator and submit it to the device, as if it was a PIN code: `sudo mmcli -i 0 --pin=<your_unlock_code>`
 
 If your Qualcomm-based USB device doesn't expose a Diag port by default, you may need to type the following through the AT port in order to enable the Diag port:
 
@@ -213,7 +213,7 @@ AT$QCDMG
 
 Please note that only one client may communicate with the Diag port at the same time. This applies to two QCSuper instances, or QCSuper and ModemManager instances.
 
-If ModemManager is active on your system, QCSuper will attempt to dynamically add an udev rule for preventing it to access the Diag port and restart its daemon, as it's currently the best way to achieve this. It will suppress this rule when closed.
+If ModemManager is active on your system, QCSuper will attempt to dynamically add an udev rule to prevent it to access the Diag port and restart its daemon, as it's currently the best way to achieve this. It will suppress this rule when closed.
 
 ## Related tools using the Diag protocol
 
