@@ -9,7 +9,8 @@ from shutil import which
 import gzip
 
 try:
-    from os import setpgrp, getenv, setresgid, setresuid
+    from os import setpgrp, getenv, setresgid, setresuid, setgroups, getgrouplist
+    from pwd import getpwuid
     IS_UNIX = True
 
 except Exception:
@@ -419,7 +420,11 @@ class WiresharkLive(PcapDumper):
         
         if uid and gid:
             
-            setresgid(int(gid), int(gid), -1)
+            uid, gid = int(uid), int(gid)
+
+            setgroups(getgrouplist(getpwuid(uid).pw_name, gid))
+
+            setresgid(gid, gid, -1)
             
-            setresuid(int(uid), int(uid), -1)
+            setresuid(uid, uid, -1)
 
