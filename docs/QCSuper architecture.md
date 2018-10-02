@@ -27,11 +27,11 @@ QCSuper needs to deal to multiple sources of input:
 
 All this requires a form of concurrency to be acheived: either threading, or a way to poll on descriptors through an event loop.
 
-The design ease/simplicity tradeoff I have chosen was to use threading (but I'm open to rework the architecture if someone has something else to propose). Polling on both a serial port and a featureful command prompt or thread queue (for example) is not doable easily in a multi-platform way, and using asyncio seemed to add some design and syntaxing overhead/external libraries to the equation.
+The design ease/simplicity tradeoff I have chosen was to use threading (but I'm open to rework the architecture if someone has something else to propose). Polling on both a serial port and a featureful command prompt or thread queue (for example) is not doable easily in a multi-platform way, and using asyncio seemed to add some design and syntaxic overhead/external libraries to the equation.
 
 ### Threading model
 
-QCSuper makes uses of different threads:
+QCSuper makes use of different threads:
 
 * The main thread contains the loop reading from the device, and is the only place where reading is performed (it will also dispatch asynchronous messages to modules, calling the `on_log`, `on_message` which may not write neither read, and call at teardown the `on_deinit` callback with may write)
 * A background thread is used for initializing the modules selected through command line arguments (calling the `on_init` callback which may write)
