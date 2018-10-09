@@ -10,7 +10,8 @@ from os import makedirs
 """
     This module is meant to dump the memory from a QCDM device. It will better
     work on older devices (e.g the Qualcomm Icon 225 from 2008, as presented in
-    research from Guillaume Delugré), on other it will work on certain memory ranges.
+    research from Guillaume Delugré), on other it will work on certain memory ranges,
+    on some it will not work at all.
     
     This module creates an output directory where raw memory chunks will be
     written using filenames like "chunk_<start address>".
@@ -28,7 +29,7 @@ from os import makedirs
     backwards one word at once (LOOKING_BACKWARDS_10_BY_10) until the beginning
     of this chunk is found.
     
-    Once done, itnd once done read it sequetially (READING_FORWARD_10_BY_10).
+    Once done, it reads it sequentially (READING_FORWARD_10_BY_10).
 """
 
 class MemoryReaderState(IntEnum):
