@@ -83,9 +83,13 @@ class UsbModemConnector(HdlcMixin, BaseInput):
                     
                     if geteuid() != 0:
                         
-                        print("Can't create an udev rule enabling cooperation " +
-                              "between ModemManager and QCSuper, because you " +
-                              "are not root")
+                        print("ModemManager is running on this system, and " +
+                              "QCSuper needs to add a temporary udev rule to " +
+                              "enable cooperation with it on the Diag port.\n\n" +
+                              "Please either: \n" +
+                              "- Run this command as root so that QCSuper can " +
+                              "add the temporary udev rule.\n" +
+                              "- Alternatively, stop ModemManager.")
                     
                         exit()
                     

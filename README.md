@@ -116,7 +116,7 @@ A few commands you can type are:
 ./qcsuper.py --adb --pcap-dump /tmp/my_pcap.pcap
 
 # Same, but using an USB modem exposing a Diag serial port
-./qcsuper.py --usb-modem /dev/ttyHS2 --wireshark-live
+sudo ./qcsuper.py --usb-modem /dev/ttyHS2 --wireshark-live
 ```
 
 Here is the current usage notice for QCSuper:
