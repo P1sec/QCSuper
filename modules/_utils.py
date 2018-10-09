@@ -43,7 +43,7 @@ class FileType:
         
         path = expanduser(path)
         
-        if '.gz' not in path:
+        if path[-3:] != '.gz':
             
             file_obj = open(path, self.mode)
         
