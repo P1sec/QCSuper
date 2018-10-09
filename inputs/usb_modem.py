@@ -49,7 +49,7 @@ class UsbModemConnector(HdlcMixin, BaseInput):
             
             elif not access(device, W_OK):
                 
-                exit('Could not open "%s" for write, are you root?' % device)
+                exit('Could not open "%s" for write, have you sufficient privileges?' % device)
             
             self.device = device = realpath(device)
             
