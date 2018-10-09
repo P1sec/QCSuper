@@ -41,9 +41,9 @@ It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) 
 
 QCSuper was tested and developed on Ubuntu 16.04 and Windows 7. It depends on a few Python modules.
 
-Your phone must be rooted to use it. In order to check for compatibility with your phone, look up the phone's model on a site like [GSMArena](https://www.gsmarena.com/) and check whether it has a Qualcomm processor.
+To use it, your phone must be rooted or expose a diag service port over USB. In order to check for compatibility with your phone, look up the phone's model on a site like [GSMArena](https://www.gsmarena.com/) and check whether it has a Qualcomm processor.
 
-In order to open PCAP files produces by QCSuper, you can use any Wireshark 2.x for 2G/3G frames, but you need at least Wireshark 2.5.x for 4G frames (and 2.6.x for individual NAS messages decrypted out of 4G frames).
+In order to open PCAP files produced by QCSuper, you can use any Wireshark 2.x for 2G/3G frames, but you need at least Wireshark 2.5.x for 4G frames (and 2.6.x for individual NAS messages decrypted out of 4G frames).
 
 ### Ubuntu and Debian installation
 
@@ -68,7 +68,7 @@ sudo apt-get dist-upgrade wireshark
 
 On Windows, you will need to download and install your phone's USB drivers from your phone model. There is no generic way, search for your phone's model + "USB driver" or "ADB drive" on Google for instructions.
 
-Then, you need to ensure that your you can read your device using `adb`. You can find a tutorial on how to download and setup `adb` [here](https://www.xda-developers.com/install-adb-windows-macos-linux/). The `adb shell` command mush display a prompt to continue.
+Then, you need to ensure that you can read your device using `adb`. You can find a tutorial on how to download and setup `adb` [here](https://www.xda-developers.com/install-adb-windows-macos-linux/). The `adb shell` command must display a prompt to continue.
 
 Then, follow these links on order to:
 
@@ -88,12 +88,12 @@ Still in your command prompt, move to the directory containing QCSuper using the
 
 QCSuper supports capturing a handful of mobile radio protocols. These protocols are put after a [GSMTAP header](http://osmocom.org/projects/baseband/wiki/GSMTAP), a standard header (encapsulated into UDP/IP) permitting to identify the protocol, and GSMTAP packets are put into a [PCAP file](https://wiki.wireshark.org/Development/LibpcapFileFormat) that is fully analyzable using Wireshark.
 
-2G/3G/4G protocols can be broken into a few "layers": layer 1 is the radio waves, layer 2 handles stuff like fragmentation, layer 3 is the proper signalling or data.
+2G/3G/4G protocols can be broken into a few "layers": layer 1 is about the digital radio modulation and multiplexing, layer 2 handles stuff like fragmentation and acknowledgement, layer 3 is the proper signalling or user data.
 
-QCSuper allows you most often to capture the layer 3, as it is the most pratical to analyze using Wireshark, and is what the Diag protocol provides natively (and all the interesting information is here).
+QCSuper allows you most often to capture on layer 3, as it is the most pratical to analyze using Wireshark, and is what the Diag protocol provides natively (and some interesting information is here).
 
 * 2G (GSM): Layer 3 and upwards (RR/...)
-* 2.5G (GPRS): Layer 2 and upwards (MAC-RLC/...) for data acknowledgements
+* 2.5G (GPRS and EDGE): Layer 2 and upwards (MAC-RLC/...) for data acknowledgements
 * 3G (UMTS): Layer 3 and upwards (RRC/...)
   * Additionally, it supports reassembling SIBs (System Information Blocks, the data broadcast to all users) in separate GSMTAP frames, as Wireshark currently can't do it itself: flag `--reassemble-sibs`
 * 4G (LTE): Layer 3 and upwards (RRC/...)
@@ -101,7 +101,7 @@ QCSuper allows you most often to capture the layer 3, as it is the most pratical
 
 By default, the IP traffic sent by your device is not included, you see only the signalling frames. You can include the IP traffic you generate using the `--include-ip-traffic` option (IP being barely the layer 3 for your data traffic in 2G/3G/4G, at the detail that its headers may be compressed (ROHC) and a tiny PPP header may be included).
 
-The data traffic you send uses a channel different from the signalling traffic, this channed being is setup through the signalling traffic; QCSuper should thus show you all details releant to how this channel is initiated.
+The data traffic you send uses a channel different from the signalling traffic, this channed is setup through the signalling traffic; QCSuper should thus show you all details relevant to how this channel is initiated.
 
 ## Usage notice
 
@@ -196,11 +196,11 @@ Memory dumping options:
 
 You can use QCSuper with an USB modem exposing a Diag port using the `--usb-modem <device>` option, where `<device>` is the name of the pseudo-serial device on Linux (such as `/dev/ttyUSB0`, `/dev/ttyHS2` and other possibilites) or of the COM port on Windows (such as `COM3`).
 
-Please note that you need to use QCSuper as root in order to be able to use this mode, notably for handling serial port interference.
+Please note that you need to use QCSuper as root or have a specific system configuration (such as being a member of the `dialout` group) in order to be able to use this mode, notably for handling serial port interference.
 
 If you don't know which devices under `/dev` exposes the Diag port, you may have to try multiple of these. You can try to auto-detect it by stopping the ModemManager daemon (`sudo systemctl stop ModemManager`), and using the following command: `sudo ModemManager --debug 2>&1 | grep -i 'port is QCDM-capable'` then Ctrl-C.
 
-Please note that if you're not able to use your device with for example ModemManager in first place, it is likely that it is not totally setup and that it will not work neither with QCSuper. A few possible gotchas are:
+Please note that if you're not able to use your device with for example ModemManager in the first place, it is likely that it is not totally setup and that it will not work neither with QCSuper. A few possible gotchas are:
 
   * You didn't apply the proper [mode switching](https://wiki.archlinux.org/index.php/USB_3G_Modem#Mode_switching) command for your device.
   
@@ -235,7 +235,7 @@ There are a few other open tools implementing bits of the Diag protocol, serving
 
 * [ModemManager](https://github.com/endlessm/ModemManager): the principal daemon enabling to use USB modems on Linux, implements bits of the Diag protocol (labelled as QCDM) in order to retrieve basic information about USB modem devices.
 * [SnoopSnitch](https://play.google.com/store/apps/details?id=de.srlabs.snoopsnitch&hl=fr) (specifically [gsm-parser](https://github.com/E3V3A/gsm-parser)): chiefly an Android application whose purpose is to detect potential attacks on the radio layer (IMSI catcher, fake BTS...). It also have a secondary feature to capture some signalling traffic to PCAP, which does not provide exactly the same thing as QCSuper (LTE traffic isn't encapsulated in GSMTAP for example, device support may be different).
-  * [diag-parser](https://github.com/moiji-mobile/diag-parser): A Linux tool derivate from the PCAP generation feature from SnoopSnitch, somewhat improved, designed to work with USB modems.
+  * [diag-parser](https://github.com/moiji-mobile/diag-parser): A Linux tool that derivates from the PCAP generation feature from SnoopSnitch, somewhat improved, designed to work with USB modems.
 * [MobileInsight](http://www.mobileinsight.net/): this Android application intends to parse all kinds of logs output by Qualcomm and Mediatek devices (not only those containing signalling information, but also proprietary debugging structures), and dumping these to a specific XML representation format. Does not provide user-facing PCAPs (but formerly used Wireshark as a backend for converting certain protocol information to XML).
 * [qcombbdbg](https://github.com/yingted/qcombbdbg): A debugger for the Qualcomm baseband setting up itself by hooking a Diag command, through using the Diag command that allows to write to memory, for the Option Icon 225 USB modem.
 * [OpenPST](https://github.com/openpst/openpst): A set of tools related to Qualcomm devices, including a GUI utility allowing, for example, to read data on the tiny embedded filesystem accessible through Diag (EFS).
