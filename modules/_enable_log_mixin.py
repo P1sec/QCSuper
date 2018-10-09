@@ -12,7 +12,7 @@ from time import sleep
 """
 
 """
-    Defintions:
+    Definitions:
 
     * A "log" is a packet containing debugging information sent asynchronously
       through Diag by the baseband, as a raw binary structure, at the condition
@@ -184,4 +184,3 @@ class EnableLogMixin:
                 log_mask_bitsize
             ) + log_mask)
 
-            
