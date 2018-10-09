@@ -59,7 +59,7 @@ sudo apt install python3-pip wireshark
 sudo pip3 install --upgrade pyserial crcmod https://github.com/P1sec/pycrate/archive/master.zip
 
 # Upgrade to a recent snapshot of Wireshark (needed for decoding 4G frames)
-sudo add-apt-repository ppa:dreibh/ppa
+sudo add-apt-repository ppa:wireshark-dev/stable
 sudo apt-get update
 sudo apt-get dist-upgrade wireshark
 ```
@@ -72,8 +72,8 @@ Then, you need to ensure that you can read your device using `adb`. You can find
 
 Then, follow these links on order to:
 
-* [Install Python 3.6](https://www.python.org/ftp/python/3.6.5/python-3.6.5.exe) (be sure to check options to include it into PATH, install it for all users and install pip)
-* [Install Wireshark 2.6](https://1.eu.dl.wireshark.org/win32/Wireshark-win32-2.6.0.exe)
+* [Install Python 3.6](https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe) (be sure to check options to include it into PATH, install it for all users and install pip)
+* [Install Wireshark 2.6](https://1.eu.dl.wireshark.org/win32/Wireshark-win32-2.6.3.exe)
 * [Download and extract QCSuper](https://github.com/P1sec/QCSuper/archive/master.zip)
 
 To install the required Python modules, open your command prompt and type:
@@ -234,8 +234,8 @@ Do no hesitate to report whether your device is successfully working or not thro
 There are a few other open tools implementing bits of the Diag protocol, serving various purposes:
 
 * [ModemManager](https://github.com/endlessm/ModemManager): the principal daemon enabling to use USB modems on Linux, implements bits of the Diag protocol (labelled as QCDM) in order to retrieve basic information about USB modem devices.
-* [SnoopSnitch](https://play.google.com/store/apps/details?id=de.srlabs.snoopsnitch&hl=fr) (specifically [gsm-parser](https://github.com/E3V3A/gsm-parser)): chiefly an Android application whose purpose is to detect potential attacks on the radio layer (IMSI catcher, fake BTS...). It also have a secondary feature to capture some signalling traffic to PCAP, which does not provide exactly the same thing as QCSuper (LTE traffic isn't encapsulated in GSMTAP for example, device support may be different).
+* [SnoopSnitch](https://opensource.srlabs.de/projects/snoopsnitch) (specifically [gsm-parser](https://github.com/E3V3A/gsm-parser)): chiefly an Android application whose purpose is to detect potential attacks on the radio layer (IMSI catcher, fake BTS...). It also have a secondary feature to capture some signalling traffic to PCAP, which does not provide exactly the same thing as QCSuper (LTE traffic isn't encapsulated in GSMTAP for example, device support may be different).
   * [diag-parser](https://github.com/moiji-mobile/diag-parser): A Linux tool that derivates from the PCAP generation feature from SnoopSnitch, somewhat improved, designed to work with USB modems.
 * [MobileInsight](http://www.mobileinsight.net/): this Android application intends to parse all kinds of logs output by Qualcomm and Mediatek devices (not only those containing signalling information, but also proprietary debugging structures), and dumping these to a specific XML representation format. Does not provide user-facing PCAPs (but formerly used Wireshark as a backend for converting certain protocol information to XML).
-* [qcombbdbg](https://github.com/yingted/qcombbdbg): A debugger for the Qualcomm baseband setting up itself by hooking a Diag command, through using the Diag command that allows to write to memory, for the Option Icon 225 USB modem.
+* [qcombbdbg](https://code.google.com/archive/p/qcombbdbg/): A debugger for the Qualcomm baseband setting up itself by hooking a Diag command, through using the Diag command that allows to write to memory, for the Option Icon 225 USB modem.
 * [OpenPST](https://github.com/openpst/openpst): A set of tools related to Qualcomm devices, including a GUI utility allowing, for example, to read data on the tiny embedded filesystem accessible through Diag (EFS).
