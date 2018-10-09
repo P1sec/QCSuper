@@ -12,10 +12,10 @@ from re import sub
 """
     This module allows the user to use a command prompt, to which it will be
     able to send arguments that directly map to the standard arguments of the
-    program. For example, "./qcsuper.py --pcap-dump test.pcap" wil map to the
+    program. For example, "./qcsuper.py --pcap-dump test.pcap" will map to the
     command "pcap-dump test.pcap".
     
-    Due to the blocking character of this task, it is run in a separate thread.
+    Due to the blocking behavior of this task, it is run in a separate thread.
 """
 
 class CommandLineInterface:
@@ -24,8 +24,8 @@ class CommandLineInterface:
         :param diag_input: The object for the input mode chosen by the user.
         :param parser: The original ArgumentParser for the program.
         :param parse_modules_args: A callback receiving parsed again arguments,
-            where tbe original argv has been concatenated with the module the
-            user has just queried through CLI.
+            where the original argv has been concatenated with the module the
+            user has just queried through the CLI.
     """
     
     def __init__(self, diag_input, parser, parse_modules_args):
@@ -118,6 +118,12 @@ class CommandLineInterface:
         try:
             
             from readline import parse_and_bind, set_completer, set_completer_delims
+        
+        except ImportError:
+            
+            pass
+        
+        else: 
             
             def complete_command_or_path(text, nb_tries):
                 
@@ -153,16 +159,13 @@ class CommandLineInterface:
             set_completer_delims(' \t\n')
             
             parse_and_bind('tab: complete')
-            
-        except ImportError:
-            
-            pass
-        
+    
+    
     """
         Print the help for the command-line prompt, adapting the original
         output from ArgumentParser.
     """
-
+    
     def print_help(self):
         
         help_text = self.parser.format_help()
