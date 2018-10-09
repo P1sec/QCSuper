@@ -2,7 +2,7 @@ The **Diag protocol**, also called **QCDM** or **DM** (Diagnostic monitor) is a 
 
 It can be accessed through multiple channels:
 
-* On Android phones, it is exposed internally through the `/dev/diag` device, loaded by the "diagchar" kernel module. This device may communicate with the baseband in multiple ways (shared memory, serial).
+* On Android phones, it is exposed internally through the `/dev/diag` device, created by the "diagchar" kernel module. This device may communicate with the baseband in multiple ways (shared memory, serial).
 
 * On USB modems, it is exposed externally through an USB pseudo-serial port (likely `/dev/ttyUSB*` or `/dev/ttyHSO*`).
   * Most often exposed directly, or requires to send a special AT command (`AT$QCDMG`).
@@ -16,11 +16,11 @@ In its simplest form, the Diag protocol uses a simple framing (inspired by the [
 
 It is composed of:
 
-* Contents in which the trailer character `\x7e` is escaped as `\x7d\x5e`, and `\x7d` escaped as `\x7d\x5d`:
+* Contents in which the trailer character `b\x7e` is escaped as `b\x7d\x5e`, and `b\x7d` escaped as `b\x7d\x5d`:
   * 1 byte: command code
   * n bytes: packet payload
   * 2 bytes: CCITT CRC-16 checksum (with Python: `crcmod.mkCrcFun(0x11021, initCrc=0, xorOut=0xffff)`)
-* 1 byte: trailer character (`\x7e`)
+* 1 byte: trailer character (`b\x7e`)
 
 Looking at the effective contents, these are composed of two parts, the one-byte command code and the payload that ensues.
 
@@ -37,11 +37,11 @@ Diag may expose a lot of functionalites, including:
 * Gathering generation information about the device (baseband firmware version, model, serial number...)
 * Reading/writing memory (fully enabled on older devices, most often restricted to ranges or disabled on newer)
 * Reading/writing non-volatile memory (read and alter protocol-specific state variables)
-* Commands related to calls/SMS
+* Commands related to calls and messaging
 * Commands related to GPS
 * Commands specific to 2G/3G/4G protocols, layer 1 to 3
 * Commands related to the tiny internal filesystem of the baseband (EFS)
-* Many more. Most features added after a some point in the expansion of Diag use the `DIAG_SUBSYS_CMD_F` command which allows to use a 1-byte subsystem number, followed by a 2-bytes subsystem command code.
+* Many more. Most features added after some point in the expansion of Diag use the `DIAG_SUBSYS_CMD_F` command which allows to use a 1-byte subsystem number, followed by a 2-bytes subsystem command code.
 
 # The diag protocol over `/dev/diag`
 

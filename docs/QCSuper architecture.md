@@ -33,7 +33,7 @@ The design ease/simplicity tradeoff I have chosen was to use threading (but I'm 
 
 QCSuper makes use of different threads:
 
-* The main thread contains the loop reading from the device, and is the only place where reading is performed (it will also dispatch asynchronous messages to modules, calling the `on_log`, `on_message` which may not write neither read, and call at teardown the `on_deinit` callback with may write)
+* The main thread contains the loop reading from the device, and is the only place where reading is performed (it will also dispatch asynchronous messages to modules, calling the `on_log`, `on_message` which may not write neither read, and call at teardown the `on_deinit` callback which may write)
 * A background thread is used for initializing the modules selected through command line arguments (calling the `on_init` callback which may write)
 * A background thread may be used for the optional interactive prompt (`--cli`) and initializing the modules called from it (calling the `on_init` callback which may write)
 
@@ -42,17 +42,17 @@ QCSuper makes use of different threads:
 A module is a Python class which may expose different methods:
 
 * `__init__`: will receive the input object as its first argument, and optionally other arguments from the command line or interactive prompt (passed in sequence from the entry point `qcsuper.py`).
-* `on_init`: called when the connection to the Diag device was established. Not called when the input is not a device but a file containing recorded log data.
+* `on_init`: called when the connection to the Diag device is established. Not called when the input is not a device but a file containing recorded log data.
 * Callbacks triggered by a read on the input source:
-  * `on_log`: called when an asynchronous response Diag protocol raw "log" was received.
-  * `on_message`: called when an asynchronous response Diag protocol text "message" structure was received.
+  * `on_log`: called when an asynchronous response Diag protocol raw "log" is received.
+  * `on_message`: called when an asynchronous response Diag protocol text "message" structure is received.
 * `on_deinit`: called when the connection to the Diag device ceased establishment, or the user hit Ctrl+C.
 
-The methods composing these callback may perform request-response operations (using `self.diag_reader.send_recv(opcode, payload)`, where `self.diag_reader` is the input object).
+The methods composing these callbacks may perform request-response operations (using `self.diag_reader.send_recv(opcode, payload)`, where `self.diag_reader` is the input object).
 
-When a request-response operation is performed, the thread for the callback is paused using the response is received, using a thread synchronization primitive shared with the main thread.
+When a request-response operation is performed, the thread for the callback is paused for the time the response is received, using a thread synchronization primitive shared with the main thread.
 
-When using the interactive prompt (`--cli`), the moment where the `on_init` callbacks ends is the moment where the used is informed that the task continued to background (or is finished, in the case where there is no further callbacks).
+When using the interactive prompt (`--cli`), the moment where the `on_init` callbacks ends is the moment where the user is informed that the task continued to background (or is finished, in the case where there is no further callbacks).
 
 ### Inputs API
 
