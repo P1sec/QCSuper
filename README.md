@@ -27,6 +27,7 @@ It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) 
 **Annexes:**
 
 * [Using QCSuper with an USB modem](#using-qcsuper-with-an-usb-modem)
+* [Supported devices](#supported-devices)
 * [Related tools using the Diag protocol](#related-tools-using-the-diag-protocol)
 
 **Blog post/demo:** [...]()
@@ -214,6 +215,19 @@ AT$QCDMG
 Please note that only one client may communicate with the Diag port at the same time. This applies to two QCSuper instances, or QCSuper and ModemManager instances.
 
 If ModemManager is active on your system, QCSuper will attempt to dynamically add an udev rule to prevent it to access the Diag port and restart its daemon, as it's currently the best way to achieve this. It will suppress this rule when closed.
+
+## Supported devices
+
+QCSuper was successfully tested with:
+
+* Sony Xperia Z (Phone)
+* ZTE MF823 (USB Modem)
+* ZTE MF667 (USB Modem)
+* Option Icon 225 (USB Modem)
+
+Is it however aiming to be compatible with the widest possible range of devices based on a Qualcomm chipset, for the capture part.
+
+Do no hesitate to report whether your device is successfully working or not through the [IRC channel](http://webchat.freenode.net/?channels=#qcsuper), or opening a [Github issue](https://github.com/P1sec/QCSuper/issues/new).
 
 ## Related tools using the Diag protocol
 
