@@ -61,7 +61,7 @@ sudo pip3 install --upgrade pyserial crcmod https://github.com/P1sec/pycrate/arc
 # Upgrade to a recent snapshot of Wireshark (needed for decoding 4G frames)
 sudo add-apt-repository ppa:dreibh/ppa
 sudo apt-get update
-sudo apt-get upgrade wireshark
+sudo apt-get dist-upgrade wireshark
 ```
 
 ### Windows installation
