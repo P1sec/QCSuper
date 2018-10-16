@@ -16,11 +16,11 @@ In its simplest form, the Diag protocol uses a simple framing (inspired by the [
 
 It is composed of:
 
-* Contents in which the trailer character `b\x7e` is escaped as `b\x7d\x5e`, and `b\x7d` escaped as `b\x7d\x5d`:
+* Contents in which the trailer character `\x7e` is escaped as `\x7d\x5e`, and `\x7d` escaped as `\x7d\x5d`:
   * 1 byte: command code
   * n bytes: packet payload
   * 2 bytes: CCITT CRC-16 checksum (with Python: `crcmod.mkCrcFun(0x11021, initCrc=0, xorOut=0xffff)`)
-* 1 byte: trailer character (`b\x7e`)
+* 1 byte: trailer character (`\x7e`)
 
 Looking at the effective contents, these are composed of two parts, the one-byte command code and the payload that ensues.
 
