@@ -59,7 +59,7 @@ sudo apt install python3-pip wireshark
 sudo pip3 install --upgrade pyserial crcmod https://github.com/P1sec/pycrate/archive/master.zip
 
 # Upgrade to a recent snapshot of Wireshark (needed for decoding 4G frames)
-sudo add-apt-repository ppa:wireshark-dev/stable
+sudo add-apt-repository ppa:dreibh/ppa
 sudo apt-get update
 sudo apt-get dist-upgrade wireshark
 ```
