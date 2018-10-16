@@ -196,7 +196,7 @@ Memory dumping options:
 
 You can use QCSuper with an USB modem exposing a Diag port using the `--usb-modem <device>` option, where `<device>` is the name of the pseudo-serial device on Linux (such as `/dev/ttyUSB0`, `/dev/ttyHS2` and other possibilites) or of the COM port on Windows (such as `COM3`).
 
-Please note that you need to use QCSuper as root or have a specific system configuration (such as being a member of the `dialout` group) in order to be able to use this mode, notably for handling serial port interference.
+Please note that in most setups, you will need to run QCSuper as root in order to be able to use this mode, notably for handling serial port interference.
 
 If you don't know which devices under `/dev` exposes the Diag port, you may have to try multiple of these. You can try to auto-detect it by stopping the ModemManager daemon (`sudo systemctl stop ModemManager`), and using the following command: `sudo ModemManager --debug 2>&1 | grep -i 'port is QCDM-capable'` then Ctrl-C.
 
