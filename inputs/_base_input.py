@@ -21,7 +21,7 @@ MSG_LVL_NONE = 0
     read from dump files. They do so through exactly one input (USB modem,
     phone...).
     
-    An input is materialized through all class. All inputs will inherit from
+    An input is materialized through a class. All inputs will inherit from
     this base class.
 """
 
