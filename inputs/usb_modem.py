@@ -51,100 +51,9 @@ class UsbModemConnector(HdlcMixin, BaseInput):
                 
                 exit('Could not open "%s" for write, are you root?' % device)
             
-            # Try to handle ModemManager interference by adding an udev rule
-
-            if which('udevadm') and which('systemctl') and which('ModemManager'):
-                
-                try:
-                    
-                    makedirs('/run/udev/rules.d', exist_ok = True)
-                    
-                    self.udev_rule_file_path = '/run/udev/rules.d/99-qcsuper-blacklist-%s.rules' % basename(device)
-                    
-                    with open(self.udev_rule_file_path, 'w') as udev_rule:
-                        
-                        udev_rule.write('KERNEL=="%s", ENV{ID_MM_PORT_IGNORE}="1"\n' % basename(device))
-                    
-                    run(['udevadm', 'control', '--reload-rules'], check = True)
-                    run(['udevadm', 'trigger', '--name-match=' + device], check = True)
-                    
-                    try:
-                        
-                        if run(['systemctl', '--quiet', 'is-active', 'ModemManager']).returncode == 0:
-                            
-                            run(['systemctl', 'restart', 'ModemManager'], check = True)
-                    
-                    except CalledProcessError:
-                        
-                        print('Note: cannot restart the ModemManager daemon ' +
-                              'through systemd')
-                
-                except (OSError, CalledProcessError) as error:
-                    
-                    if geteuid() != 0:
-                        
-                        print("ModemManager is running on this system, and " +
-                              "QCSuper needs to add a temporary udev rule to " +
-                              "enable cooperation with it on the Diag port.\n\n" +
-                              "Please either: \n" +
-                              "- Run this command as root so that QCSuper can " +
-                              "add the temporary udev rule.\n" +
-                              "- Alternatively, stop ModemManager.")
-                    
-                        exit()
-                    
-                    else:
-                        
-                        print("Cannot dynamically create an udev rule for preventing " +
-                              "ModemManager to access the Diag port:", error)
+            self.device = device = realpath(device)
             
-            # Try to detect another process which may interfere with the Diag port,
-            # propose to terminate it when it is present
-            
-            device = realpath(device)
-        
-            if exists('/proc'):
-                
-                for pid in filter(str.isdigit, listdir('/proc')):
-                    
-                    cmdline_path = '/proc/%s/cmdline' % pid
-                    fds_dir = '/proc/%s/fd' % pid
-                    
-                    try:
-                                    
-                        with open(cmdline_path) as cmdline_fd:
-                        
-                            proc_name = cmdline_fd.read().replace('\x00', ' ').strip()
-                        
-                        if 'modem' not in proc_name.lower() and 'qc' not in proc_name.lower():
-                            
-                            continue
-                        
-                        if not access(fds_dir, R_OK):
-                            
-                            print("Cannot scan for processes that may interfere on the Diag " +
-                                  "port because you're not root")
-                            
-                            exit()
-                            
-                        for fd in listdir(fds_dir):
-                        
-                            if realpath(fds_dir + '/' + fd) == device:
-                                
-                                if 'y' in input(('The process "%s" is already connected to "%s", do ' +
-                                    'you want to kill it? [y/n] ') % (proc_name, device)).lower():
-                                    
-                                    kill(int(pid), SIGTERM)
-                                    
-                                    sleep(0.2)
-                                
-                                else:
-                                    
-                                    exit('Cannot connect on the Diag port at the same time')
-                        
-                    except (FileNotFoundError, PermissionError):
-                        
-                        pass
+            self.detect_diag_interference()
         
         # Initialize the serial device
         
@@ -162,6 +71,118 @@ class UsbModemConnector(HdlcMixin, BaseInput):
         self.received_first_packet = False
         
         super().__init__()
+    
+    def detect_diag_interference(self, try_handle_modemmanager = True):
+        
+        # Try to detect another process which may interfere with the Diag port,
+        # propose to terminate it when it is present
+    
+        if exists('/proc'):
+            
+            for pid in filter(str.isdigit, listdir('/proc')):
+                
+                cmdline_path = '/proc/%s/cmdline' % pid
+                fds_dir = '/proc/%s/fd' % pid
+                
+                try:
+                                
+                    with open(cmdline_path) as cmdline_fd:
+                    
+                        proc_name = cmdline_fd.read().replace('\x00', ' ').strip()
+                    
+                    if 'modemmanager' not in proc_name.lower() and 'qc' not in proc_name.lower():
+                        
+                        continue
+                    
+                    if not access(fds_dir, R_OK):
+                        
+                        print(('The process "%s" may possibly be interfering with ' +
+                               "QCSuper, however it can't be confirmed because " +
+                               "you're not root. Please re-run with sudo to " +
+                               'take appropriate action.') % proc_name)
+                        
+                        exit()
+                        
+                    for fd in listdir(fds_dir):
+                    
+                        if realpath(fds_dir + '/' + fd) == self.device:
+                            
+                            if 'modemmanager' in proc_name.lower() and try_handle_modemmanager:
+                                
+                                self.handle_modemmanager_interference()
+                                
+                                self.detect_diag_interference(try_handle_modemmanager = False)
+                                
+                                return
+                            
+                            if 'y' in input(('The process "%s" is already connected to "%s", do ' +
+                                'you want to kill it? [y/n] ') % (proc_name, self.device)).lower():
+                                
+                                kill(int(pid), SIGTERM)
+                                
+                                sleep(0.2)
+                            
+                            else:
+                                
+                                exit('Cannot connect on the Diag port at the same time')
+                    
+                except (FileNotFoundError, PermissionError):
+                    
+                    pass
+    
+    def handle_modemmanager_interference(self):
+        
+        # Try to handle ModemManager interference by adding an udev rule
+
+        if which('udevadm') and which('systemctl') and which('ModemManager'):
+            
+            try:
+                
+                makedirs('/run/udev/rules.d', exist_ok = True)
+                
+                self.udev_rule_file_path = '/run/udev/rules.d/99-qcsuper-blacklist-%s.rules' % basename(self.device)
+                
+                with open(self.udev_rule_file_path, 'w') as udev_rule:
+                    
+                    udev_rule.write('KERNEL=="%s", ENV{ID_MM_PORT_IGNORE}="1"\n' % basename(self.device))
+                
+                run(['udevadm', 'control', '--reload-rules'], check = True)
+                run(['udevadm', 'trigger', '--name-match=' + self.device], check = True)
+                
+                try:
+                    
+                    if run(['systemctl', '--quiet', 'is-active', 'ModemManager']).returncode == 0:
+                        
+                        run(['systemctl', 'restart', 'ModemManager'], check = True)
+                
+                except CalledProcessError:
+                    
+                    print('Note: cannot restart the ModemManager daemon ' +
+                          'through systemd')
+                
+                print('Note: cooperation with ModemManager was enabled ' +
+                      'through adding a temporary udev rule. This udev ' +
+                      'rule will be automatically removed when quitting ' +
+                      'QCSuper.')
+            
+            except (OSError, CalledProcessError) as error:
+                
+                if geteuid() != 0:
+                    
+                    print("ModemManager is running on this system, and " +
+                          "QCSuper needs to add a temporary udev rule to " +
+                          "enable cooperation with it on the Diag port.\n\n" +
+                          "Please either: \n" +
+                          "- Run this command as root so that QCSuper can " +
+                          "add the temporary udev rule.\n" +
+                          "- Alternatively, stop ModemManager.")
+                
+                    exit()
+                
+                else:
+                    
+                    print("Cannot dynamically create an udev rule for preventing " +
+                          "ModemManager to access the Diag port:", error)
     
     def __del__(self):
         
