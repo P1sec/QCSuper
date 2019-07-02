@@ -39,11 +39,11 @@ It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) 
 
 ## Installation
 
-QCSuper was tested and developed on Ubuntu 16.04 and Windows 7. It depends on a few Python modules.
+QCSuper was tested and developed on Ubuntu 16.04, 18.04 and Windows 7. It depends on a few Python modules.
 
 To use it, your phone must be rooted or expose a diag service port over USB. In order to check for compatibility with your phone, look up the phone's model on a site like [GSMArena](https://www.gsmarena.com/) and check whether it has a Qualcomm processor.
 
-In order to open PCAP files produced by QCSuper, you can use any Wireshark 2.x for 2G/3G frames, but you need at least Wireshark 2.5.x for 4G frames (and 2.6.x for individual NAS messages decrypted out of 4G frames).
+In order to open PCAP files produced by QCSuper, you can use any Wireshark 2.x for 2G/3G frames, but you need at least Wireshark 2.5.x for 4G frames (and 2.6.x for individual NAS messages decrypted out of 4G frames). Ubuntu currently provides a recent enough build for all versions.
 
 ### Ubuntu and Debian installation
 
@@ -57,23 +57,18 @@ cd qcsuper
 # Install dependencies
 sudo apt install python3-pip wireshark
 sudo pip3 install --upgrade pyserial crcmod https://github.com/P1sec/pycrate/archive/master.zip
-
-# Upgrade to a recent snapshot of Wireshark (needed for decoding 4G frames)
-sudo add-apt-repository ppa:dreibh/ppa
-sudo apt-get update
-sudo apt-get dist-upgrade wireshark
 ```
 
 ### Windows installation
 
-On Windows, you will need to download and install your phone's USB drivers from your phone model. There is no generic way, search for your phone's model + "USB driver" or "ADB drive" on Google for instructions.
+On Windows, you will need to download and install your phone's USB drivers from your phone model. There is no generic way, search for your phone's model + "USB driver" or "ADB driver" on Google for instructions.
 
-Then, you need to ensure that you can read your device using `adb`. You can find a tutorial on how to download and setup `adb` [here](https://www.xda-developers.com/install-adb-windows-macos-linux/). The `adb shell` command must display a prompt to continue.
+Then, you need to ensure that you can reach your device using `adb`. You can find a tutorial on how to download and setup `adb` [here](https://www.xda-developers.com/install-adb-windows-macos-linux/). The `adb shell` command must display a prompt to continue.
 
 Then, follow these links on order to:
 
-* [Install Python 3.6](https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe) (be sure to check options to include it into PATH, install it for all users and install pip)
-* [Install Wireshark 2.6](https://1.eu.dl.wireshark.org/win32/Wireshark-win32-2.6.3.exe)
+* [Install Python 3.6](https://www.python.org/ftp/python/3.6.8/python-3.6.8.exe) or more recent (be sure to check options to include it into PATH, install it for all users and install pip)
+* [Install Wireshark 2.6](https://1.eu.dl.wireshark.org/win32/Wireshark-win32-2.6.9.exe) or more recent
 * [Download and extract QCSuper](https://github.com/P1sec/QCSuper/archive/master.zip)
 
 To install the required Python modules, open your command prompt and type:
@@ -198,7 +193,7 @@ You can use QCSuper with an USB modem exposing a Diag port using the `--usb-mode
 
 Please note that in most setups, you will need to run QCSuper as root in order to be able to use this mode, notably for handling serial port interference.
 
-If you don't know which devices under `/dev` exposes the Diag port, you may have to try multiple of these. You can try to auto-detect it by stopping the ModemManager daemon (`sudo systemctl stop ModemManager`), and using the following command: `sudo ModemManager --debug 2>&1 | grep -i 'port is QCDM-capable'` then Ctrl-C.
+If you don't know which devices under `/dev` expose the Diag port, you may have to try multiple of these. You can try to auto-detect it by stopping the ModemManager daemon (`sudo systemctl stop ModemManager`), and using the following command: `sudo ModemManager --debug 2>&1 | grep -i 'port is QCDM-capable'` then Ctrl-C.
 
 Please note that if you're not able to use your device with for example ModemManager in the first place, it is likely that it is not totally setup and that it will not work neither with QCSuper. A few possible gotchas are:
 
