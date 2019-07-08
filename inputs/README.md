@@ -46,7 +46,7 @@ class MyExampleInput(BaseInput):
             self.dispatch_received_diag_packet(unframed_packet)
     
     """
-        Use this function for any necesserary, systematical cleanup.
+        Use this function for any necessary, systematical cleanup.
     """
     
     def __del__(self):

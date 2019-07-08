@@ -48,7 +48,7 @@ class MyExampleModule:
         pass # Not useful here :)
     
     """
-        Use these functions for any necesserary, systematical cleanup.
+        Use these functions for any necessary, systematical cleanup.
         
         on_deinit is not called when replaying from a file while __del__ is.
     """
