@@ -30,7 +30,7 @@ It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) 
 * [Supported devices](#supported-devices)
 * [Related tools using the Diag protocol](#related-tools-using-the-diag-protocol)
 
-**Blog post/demo:** [...]()
+**Blog post/demo:** [Presenting QCSuper: a tool for capturing your 2G/3G/4G air traffic on Qualcomm-based phones](https://labs.p1sec.com/2019/07/09/presenting-qcsuper-a-tool-for-capturing-your-2g-3g-4g-air-traffic-on-qualcomm-based-phones/)
 
 **More documentation:**
 
