@@ -56,7 +56,7 @@ When using the interactive prompt (`--cli`), the moment where the `on_init` call
 
 ### Inputs API
 
-A module is a Python class which may expose different methods:
+An input is a Python class which may expose different methods:
 
 * `__init__`: will optionally receive arguments from the command line or interactive prompt (passed in sequence from the entry point `qcsuper.py`).
 * `send_request`: this function will be called when a module wants to send a Diag request packet.
