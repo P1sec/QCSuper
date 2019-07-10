@@ -36,6 +36,14 @@
 #define QCSUPER_SIZE_FIELD_SIZE 4
 #define DIAG_DATATYPE_FIELD_SIZE 4
 
+#define DIAG_CON_APSS 1 /* Bit mask for APSS */
+#define DIAG_CON_MPSS 2 /* Bit mask for MPSS */
+#define DIAG_CON_LPASS 4 /* Bit mask for LPASS */
+#define DIAG_CON_WCNSS 8 /* Bit mask for WCNSS */
+#define DIAG_CON_SENSORS 16 /* Bit mask for Sensors */
+
+#define DIAG_CON_ALL (DIAG_CON_APSS | DIAG_CON_MPSS | DIAG_CON_LPASS | DIAG_CON_WCNSS | DIAG_CON_SENSORS)
+
 // make && adb push hello /data/local/tmp && adb forward tcp:43555 tcp:43555 && adb shell "su -c /data/local/tmp/hello"
 
 struct pollfd fds[FDS_LEN] = { 0 };
@@ -122,14 +130,23 @@ int main(void) {
     const unsigned long DIAG_IOCTL_REMOTE_DEV = 32;
     const int MEMORY_DEVICE_MODE = 2;
     
-    const int mode_param[] = { MEMORY_DEVICE_MODE, -1, 0 }; // diag_logging_mode_param_t
+    // The following logic was mostly based on this
+    // algorithm:
+    // https://github.com/mobile-insight/mobileinsight-mobile/blob/master/diag_revealer/qcom/jni/diag_revealer.c#L693
+    
+    const int mode_param[] = { MEMORY_DEVICE_MODE, DIAG_CON_ALL, 0 }; // diag_logging_mode_param_t
+    const int mode_param_android9[] = { MEMORY_DEVICE_MODE, DIAG_CON_ALL, 0, 0 }; // diag_logging_mode_param_t_pie
     
     if(ioctl(diag_fd, DIAG_IOCTL_REMOTE_DEV, &use_mdm) < 0) {
         error("ioctl");
     }
 
     if(ioctl(diag_fd, DIAG_IOCTL_SWITCH_LOGGING, MEMORY_DEVICE_MODE, 0, 0, 0) < 0 &&
-       ioctl(diag_fd, DIAG_IOCTL_SWITCH_LOGGING, &mode_param, sizeof(mode_param), 0, 0, 0, 0) < 0) {
+       ioctl(diag_fd, DIAG_IOCTL_SWITCH_LOGGING, &mode_param, sizeof(mode_param), 0, 0, 0, 0) < 0 && // Android 7.0
+       ioctl(diag_fd, DIAG_IOCTL_SWITCH_LOGGING, &mode_param_android9, sizeof(mode_param_android9), 0, 0, 0, 0) < 0 && // Android 9.0
+       ioctl(diag_fd, DIAG_IOCTL_SWITCH_LOGGING, &MEMORY_DEVICE_MODE, 0, 0, 0) < 0 &&
+       ioctl(diag_fd, DIAG_IOCTL_SWITCH_LOGGING, MEMORY_DEVICE_MODE, 12, 0, 0, 0, 0) < 0 && // Redmi 4
+       ioctl(diag_fd, DIAG_IOCTL_SWITCH_LOGGING, &MEMORY_DEVICE_MODE, 12, 0, 0, 0, 0) < 0) {
         error("ioctl");
     }
     
