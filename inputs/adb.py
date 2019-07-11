@@ -180,20 +180,20 @@ class AdbConnector(HdlcMixin, BaseInput):
     
     def adb_shell(self, command):
         
-        # Can we use "adb exec-out"?
-        
-        if self.can_use_exec_out is None:
-                    
-            adb = run([adb_exe, 'exec-out', 'id'],
-                
-                stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
-            )
-        
-            self.can_use_exec_out = (adb.returncode == 0)
-        
-        # Can we execute commands?
-        
         try:
+            
+            # Can we use "adb exec-out"?
+            
+            if self.can_use_exec_out is None:
+                        
+                adb = run([adb_exe, 'exec-out', 'id'],
+                    
+                    stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
+                )
+            
+                self.can_use_exec_out = (adb.returncode == 0)
+            
+            # Can we execute commands?
             
             adb = run([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % command],
                 
