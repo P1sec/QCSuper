@@ -48,6 +48,11 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         self.su_command = '%s'
         
+        # Whether we can use "adb exec-out" instead
+        # of "adb shell" (we should do it if the
+        # remote phone supports it)
+        self.can_use_exec_out = None # (boolean, None = unknown)
+        
         self.ADB_TIMEOUT = 10
         
         # Send batch commands to check for the presence of /dev/diag through
@@ -132,7 +137,8 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         run([adb_exe, 'forward', 'tcp:' + str(QCSUPER_TCP_PORT), 'tcp:' + str(QCSUPER_TCP_PORT)], check = True, stdin = DEVNULL)
         
-        self.adb_proc = Popen([adb_exe, 'shell', self.su_command % (ANDROID_TMP_DIR + '/adb_bridge')],
+        self.adb_proc = Popen([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % (ANDROID_TMP_DIR + '/adb_bridge')],
+            
             stdin = DEVNULL, stdout = PIPE, stderr = STDOUT,
             preexec_fn = setpgrp,
             bufsize = 0, universal_newlines = True
@@ -174,9 +180,22 @@ class AdbConnector(HdlcMixin, BaseInput):
     
     def adb_shell(self, command):
         
+        # Can we use "adb exec-out"?
+        
+        if self.can_use_exec_out is None:
+                    
+            adb = run([adb_exe, 'exec-out', 'id'],
+                
+                stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
+            )
+        
+            self.can_use_exec_out = (adb.returncode == 0)
+        
+        # Can we execute commands?
+        
         try:
             
-            adb = run([adb_exe, 'shell', self.su_command % command],
+            adb = run([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % command],
                 
                 stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
             )
@@ -229,7 +248,7 @@ class AdbConnector(HdlcMixin, BaseInput):
         lat = None
         lng = None
         
-        gps_info = run([adb_exe, 'shell', 'dumpsys', 'location'], stdout = PIPE)
+        gps_info = run([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', 'dumpsys', 'location'], stdout = PIPE)
         gps_info = gps_info.stdout.decode('utf8')
         
         gps_info = search('(\d+\.\d+),(\d+\.\d+)', gps_info)
