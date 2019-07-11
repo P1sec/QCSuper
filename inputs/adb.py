@@ -55,36 +55,37 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         self.ADB_TIMEOUT = 10
         
-        # Send batch commands to check for the presence of /dev/diag through
+        # Send batch commands to check for the writability of /dev/diag through
         # adb, and for the availability of the "su" command
         
         bash_output = self.adb_shell(
             'test -w /dev/diag; echo DIAG_NOT_WRITEABLE=$?; ' +
             'test -e /dev/diag; echo DIAG_NOT_EXISTS=$?; ' +
+            'test -r /dev; echo DEV_NOT_READABLE=$?; ' +
             'su -c id'
         )
         
         # Check for the presence of /dev/diag
         
-        if not search('DIAG_NOT_EXISTS=[01]', bash_output):
+        if not search('DIAG_NOT_WRITEABLE=[01]', bash_output):
             
             print('Could not run a bash command your phone, is adb functional?')
             
             exit(bash_output)
         
-        # If writeable, continue
+        # If writable, continue
         
         elif 'DIAG_NOT_WRITEABLE=0' in bash_output:
             
             pass
-        
+
         # If not present, raise an error
         
-        elif 'DIAG_NOT_EXISTS=1' in bash_output:
+        elif 'DEV_NOT_READABLE=0' in bash_output and 'DIAG_NOT_EXISTS=1' in bash_output:
             
             exit('Could not find /dev/diag, does your phone have a Qualcomm chip?')
-        
-        # If present but not writeable, check for root
+
+        # If maybe present but not writable, check for root
         
         elif 'uid=0' in bash_output:
             
@@ -105,6 +106,19 @@ class AdbConnector(HdlcMixin, BaseInput):
                 exit('Could not get root to adb, is your phone rooted?')
         
             run([adb_exe, 'wait-for-device'], stdin = DEVNULL, check = True)
+        
+        # Once root has been obtained, send batch commands to check
+        # for the presence of /dev/diag through adb
+        
+        bash_output = self.adb_shell(
+            'test -e /dev/diag; echo DIAG_NOT_EXISTS=$?'
+        )
+        
+        # If not present, raise an error
+        
+        if 'DIAG_NOT_EXISTS=1' in bash_output:
+            
+            exit('Could not find /dev/diag, does your phone have a Qualcomm chip?')
         
         # Upload the adb_bridge
         
