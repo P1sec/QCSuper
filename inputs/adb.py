@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
-from subprocess import Popen, run, PIPE, DEVNULL, STDOUT, TimeoutExpired
+from subprocess import Popen, run, PIPE, DEVNULL, STDOUT, TimeoutExpired, list2cmdline
 from socket import socket, AF_INET, SOCK_STREAM
 from os.path import realpath, dirname
 from sys import stderr, platform
-from logging import warning
+from logging import debug
 from shutil import which
 from time import sleep
 from re import search
@@ -23,6 +23,16 @@ ADB_BRIDGE_DIR = realpath(INPUTS_DIR + '/adb_bridge')
 ADB_BIN_DIR = realpath(INPUTS_DIR + '/external/adb')
 
 ANDROID_TMP_DIR = '/data/local/tmp'
+
+# Print adb output to stdout when "-v" is passed to QCSuper
+
+def run_safe(args, **kwargs):
+    debug('[>] Running adb command: ' + list2cmdline(args))
+    result = run(args, **kwargs)
+    result_string = ((result.stdout or b'') + (result.stderr or b''))
+    if result and result_string:
+        debug('[<] Obtained result for running "%s": %s' % (list2cmdline(args), result_string))
+    return result
 
 """
     This class implements reading Qualcomm DIAG data from a the /dev/diag
@@ -99,13 +109,13 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             # "adb shell su" didn't work, try "adb root"
             
-            adb = run([adb_exe, 'root'], stdout = PIPE, stderr = STDOUT, stdin = DEVNULL)
+            adb = run_safe([adb_exe, 'root'], stdout = PIPE, stderr = STDOUT, stdin = DEVNULL)
             
             if b'cannot run as root' in adb.stdout:
                 
                 exit('Could not get root to adb, is your phone rooted?')
         
-            run([adb_exe, 'wait-for-device'], stdin = DEVNULL, check = True)
+            run_safe([adb_exe, 'wait-for-device'], stdin = DEVNULL, check = True)
         
         # Once root has been obtained, send batch commands to check
         # for the presence of /dev/diag through adb
@@ -122,7 +132,7 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         # Upload the adb_bridge
         
-        adb = run([adb_exe, 'push', ADB_BRIDGE_DIR + '/adb_bridge', ANDROID_TMP_DIR],
+        adb = run_safe([adb_exe, 'push', ADB_BRIDGE_DIR + '/adb_bridge', ANDROID_TMP_DIR],
             
             stdin = DEVNULL, stdout = PIPE, stderr = STDOUT
         )
@@ -149,7 +159,7 @@ class AdbConnector(HdlcMixin, BaseInput):
             'chmod 755 ' + ANDROID_TMP_DIR + '/adb_bridge'
         )
         
-        run([adb_exe, 'forward', 'tcp:' + str(QCSUPER_TCP_PORT), 'tcp:' + str(QCSUPER_TCP_PORT)], check = True, stdin = DEVNULL)
+        run_safe([adb_exe, 'forward', 'tcp:' + str(QCSUPER_TCP_PORT), 'tcp:' + str(QCSUPER_TCP_PORT)], check = True, stdin = DEVNULL)
         
         self.adb_proc = Popen([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % (ANDROID_TMP_DIR + '/adb_bridge')],
             
@@ -200,7 +210,7 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             if self.can_use_exec_out is None:
                         
-                adb = run([adb_exe, 'exec-out', 'id'],
+                adb = run_safe([adb_exe, 'exec-out', 'id'],
                     
                     stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
                 )
@@ -209,7 +219,7 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             # Can we execute commands?
             
-            adb = run([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % command],
+            adb = run_safe([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % command],
                 
                 stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
             )
@@ -262,7 +272,7 @@ class AdbConnector(HdlcMixin, BaseInput):
         lat = None
         lng = None
         
-        gps_info = run([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', 'dumpsys', 'location'], stdout = PIPE)
+        gps_info = run_safe([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', 'dumpsys', 'location'], stdout = PIPE)
         gps_info = gps_info.stdout.decode('utf8')
         
         gps_info = search('(\d+\.\d+),(\d+\.\d+)', gps_info)
