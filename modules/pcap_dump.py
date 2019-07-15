@@ -214,6 +214,9 @@ class PcapDumper(DecodedSibsDumper):
             if channel_type in (254, 255, RRCLOG_EXTENSION_SIB, RRCLOG_SIB_CONTAINER):
                 return # Frames containing only a MIB or extension SIB, as already present in RRC frames, ignoring
             
+            if channel_type > LTE_UL_DCCH:
+                channel_type -= 7
+            
             gsmtap_channel_type = {
                 LTE_BCCH_DL_SCH: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
                 LTE_PCCH: GSMTAP_LTE_RRC_SUB_PCCH_Message,
