@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
 from os.path import exists, getsize, isdir, expanduser
+from os import kill, getpid, dup, dup2, fdopen
+from sys import argv, stdin, stdout, stderr
 from traceback import print_exc
-from sys import argv, stdout
-from os import kill, getpid
 from re import sub, match
 from shlex import split
 from io import BytesIO
@@ -43,7 +43,19 @@ class FileType:
         
         path = expanduser(path)
         
-        if path[-3:] != '.gz':
+        if path == '/dev/stdout' and 'a' in self.mode:
+            
+            self.mode = self.mode.replace('a', 'w')
+        
+        if path == '-':
+            
+            if 'r' in self.mode:
+                file_obj = stdin.buffer if 'b' in self.mode else stdin
+            else:
+                file_obj = fdopen(dup(stdout.fileno()), 'wb' if 'b' in self.mode else 'w')
+                dup2(stderr.fileno(), stdout.fileno())
+        
+        elif path[-3:] != '.gz':
             
             file_obj = open(path, self.mode)
         

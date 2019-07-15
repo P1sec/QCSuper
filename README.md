@@ -187,6 +187,8 @@ Memory dumping options:
                         by default ffffffff.
 ```
 
+Specifying `-` to pipe data from stdin or towards stdout is supported (gzipped content may not be detected).
+
 ## Using QCSuper with an USB modem
 
 You can use QCSuper with an USB modem exposing a Diag port using the `--usb-modem <device>` option, where `<device>` is the name of the pseudo-serial device on Linux (such as `/dev/ttyUSB0`, `/dev/ttyHS2` and other possibilites) or of the COM port on Windows (such as `COM3`).
