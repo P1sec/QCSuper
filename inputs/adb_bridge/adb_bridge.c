@@ -116,6 +116,10 @@ wrong_length:
 }
 
 int main(void) {
+    /* Set the standard output to unbuffered */
+    
+    setvbuf(stdout, NULL, _IONBF, 0);
+    
     char* diag_buffer = malloc(BUFFER_LEN);
     
     int return_value;
