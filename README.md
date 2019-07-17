@@ -217,10 +217,10 @@ If ModemManager is active on your system, QCSuper will attempt to dynamically ad
 
 QCSuper was successfully tested with:
 
-* Sony Xperia Z (Phone)
-* ZTE MF823 (USB Modem)
-* ZTE MF667 (USB Modem)
-* Option Icon 225 (USB Modem)
+* Sony Xperia Z (Phone) - 4G - works out of the box after rooting an enabling adb
+* ZTE MF823 (USB Modem) - 4G - may require to [mode-switch the device to CDC-WDM](https://wiki.archlinux.org/index.php/ZTE_MF_823_%28Megafon_M100-z%29_4G_Modem#Device_Identification), set the device to [factory mode](https://wiki.archlinux.org/index.php/ZTE_MF_823_%28Megafon_M100-3%29_4G_Modem#Commands), then execute the AT command mentioned above
+* ZTE MF667 (USB Modem) - 3G, 2011 - should work out of the box (may require mode switching)
+* Option Icon 225 (USB Modem) - 3G, 2008
 * Novatel Ovation MC998D (USB Modem)
 * ZTE WCDMA Technologies MSM MF110/MF627/MF636 (USB Modem)
 
