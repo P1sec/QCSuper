@@ -223,6 +223,7 @@ QCSuper was successfully tested with:
 * Option Icon 225 (USB Modem) - 3G, 2008
 * Novatel Ovation MC998D (USB Modem)
 * ZTE WCDMA Technologies MSM MF110/MF627/MF636 (USB Modem)
+* ZTE 403zt (USB Modem) - 4G
 
 Is it however aiming to be compatible with the widest possible range of devices based on a Qualcomm chipset, for the capture part.
 
