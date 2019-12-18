@@ -224,6 +224,7 @@ QCSuper was successfully tested with:
 * Option Icon 225 (USB Modem) - 3G, 2008
 * Novatel Ovation MC998D (USB Modem)
 * ZTE WCDMA Technologies MSM MF110/MF627/MF636 (USB Modem)
+* ZTE 403zt (USB Modem) - 4G
 * OnePlus One and 3 (Phones)
 * Andromax A16C3H (Phone)
 * Samsung Galaxy S4 GT-I9505 (Phone)
