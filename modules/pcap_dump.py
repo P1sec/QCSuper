@@ -202,11 +202,6 @@ class PcapDumper(DecodedSibsDumper):
             
             packet = signalling_message[:length]
             
-            is_uplink = channel_type in (
-                LTE_UL_CCCH,
-                LTE_UL_DCCH
-            )
-            
             # GSMTAP definition:
             # - https://github.com/wireshark/wireshark/blob/wireshark-2.5.0/epan/dissectors/packet-gsmtap.h
             # - http://osmocom.org/projects/baseband/wiki/GSMTAP
@@ -217,6 +212,13 @@ class PcapDumper(DecodedSibsDumper):
             if LTE_UL_DCCH < channel_type < LTE_BCCH_DL_SCH_NB:
                 channel_type -= 7
             
+            is_uplink = channel_type in (
+                LTE_UL_CCCH,
+                LTE_UL_DCCH,
+                LTE_UL_CCCH_NB,
+                LTE_UL_DCCH_NB
+            )
+
             gsmtap_channel_type = {
                 LTE_BCCH_DL_SCH: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
                 LTE_PCCH: GSMTAP_LTE_RRC_SUB_PCCH_Message,
