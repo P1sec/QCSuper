@@ -50,6 +50,13 @@ LTE_DL_DCCH = 6
 LTE_UL_CCCH = 7
 LTE_UL_DCCH = 8
 
+LTE_BCCH_DL_SCH_NB = 46
+LTE_PCCH_NB = 47
+LTE_DL_CCCH_NB = 48
+LTE_DL_DCCH_NB = 49
+LTE_UL_CCCH_NB = 50
+LTE_UL_DCCH_NB = 52
+
 """
     These are 3G-related log types.
 """
