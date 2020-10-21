@@ -227,7 +227,7 @@ class PcapDumper(DecodedSibsDumper):
                 LTE_UL_CCCH: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message,
                 LTE_UL_DCCH: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
 
-                LTE_BCCH_DL_SCH_NB: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message_NB
+                LTE_BCCH_DL_SCH_NB: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message_NB,
                 LTE_PCCH_NB: GSMTAP_LTE_RRC_SUB_PCCH_Message_NB,
                 LTE_DL_CCCH_NB: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message_NB,
                 LTE_DL_DCCH_NB: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message_NB,
