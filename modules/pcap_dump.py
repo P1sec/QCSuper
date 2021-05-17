@@ -80,8 +80,15 @@ class PcapDumper(DecodedSibsDumper):
             # - https://github.com/wireshark/wireshark/blob/wireshark-2.5.0/epan/dissectors/packet-gsmtap.h
             # - http://osmocom.org/projects/baseband/wiki/GSMTAP
             
-            if channel_type in (254, 255, RRCLOG_EXTENSION_SIB, RRCLOG_SIB_CONTAINER):
+            # RRC channel types:
+            # - https://github.com/fgsect/scat/blob/0e1d3a4/parsers/qualcomm/diagwcdmalogparser.py#L259
+            
+            if channel_type in (254, 255, 0x89, 0xF0, RRCLOG_EXTENSION_SIB, RRCLOG_SIB_CONTAINER):
                 return # Frames containing only a MIB or extension SIB, as already present in RRC frames, ignoring
+            
+            if channel_type >= 0x80: # We are in presence of an explicit ARFCN/PSC
+                channel_type -= 0x80
+                log_payload = log_payload[4:]
             
             gsmtap_channel_type = {
                 RRCLOG_SIG_UL_CCCH: GSMTAP_RRC_SUB_UL_CCCH_Message,
@@ -90,7 +97,9 @@ class PcapDumper(DecodedSibsDumper):
                 RRCLOG_SIG_DL_DCCH: GSMTAP_RRC_SUB_DL_DCCH_Message,
                 RRCLOG_SIG_DL_BCCH_BCH: GSMTAP_RRC_SUB_BCCH_BCH_Message,
                 RRCLOG_SIG_DL_BCCH_FACH: GSMTAP_RRC_SUB_BCCH_FACH_Message,
-                RRCLOG_SIG_DL_PCCH: GSMTAP_RRC_SUB_PCCH_Message
+                RRCLOG_SIG_DL_PCCH: GSMTAP_RRC_SUB_PCCH_Message,
+                RRCLOG_SIG_DL_MCCH: GSMTAP_RRC_SUB_MCCH_Message,
+                RRCLOG_SIG_DL_MSCH: GSMTAP_RRC_SUB_MSCH_Message
             }.get(channel_type)
             
             if gsmtap_channel_type is None:
@@ -188,6 +197,9 @@ class PcapDumper(DecodedSibsDumper):
             
             (ext_header_ver, rrc_rel, rrc_ver, bearer_id, phy_cellid), ext_header = unpack('<BBBBH', log_payload[:6]), log_payload[6:]
             
+            if ext_header_ver >= 26: # Handle post-NR releases
+                (ext_header_ver, rrc_rel, rrc_ver, nc_rrc_rel, bearer_id, phy_cellid), ext_header = unpack('<BBBHBH', log_payload[:8]), log_payload[8:]
+            
             # Parse extended header
             
             freq_type = 'H' if ext_header_ver < 8 else 'I'
@@ -209,31 +221,83 @@ class PcapDumper(DecodedSibsDumper):
             if channel_type in (254, 255, RRCLOG_EXTENSION_SIB, RRCLOG_SIB_CONTAINER):
                 return # Frames containing only a MIB or extension SIB, as already present in RRC frames, ignoring
             
-            if LTE_UL_DCCH < channel_type < LTE_BCCH_DL_SCH_NB:
-                channel_type -= 7
+            if LTE_UL_DCCH_NB < channel_type <= LTE_UL_DCCH_NB + 9:
+                channel_type -= 9
+
             
-            is_uplink = channel_type in (
-                LTE_UL_CCCH,
-                LTE_UL_DCCH,
-                LTE_UL_CCCH_NB,
-                LTE_UL_DCCH_NB
-            )
-
-            gsmtap_channel_type = {
-                LTE_BCCH_DL_SCH: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
-                LTE_PCCH: GSMTAP_LTE_RRC_SUB_PCCH_Message,
-                LTE_DL_CCCH: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message,
-                LTE_DL_DCCH: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message,
-                LTE_UL_CCCH: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message,
-                LTE_UL_DCCH: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
-
+            # See here for LTE channel constants (they heavily depend on baseband
+            # versions): https://github.com/fgsect/scat/blob/01d5b81/parsers/qualcomm/diagltelogparser.py#L1207
+            
+            channel_lookup_table = {
+                LTE_BCCH_BCH_NB: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message_NB,
                 LTE_BCCH_DL_SCH_NB: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message_NB,
                 LTE_PCCH_NB: GSMTAP_LTE_RRC_SUB_PCCH_Message_NB,
                 LTE_DL_CCCH_NB: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message_NB,
                 LTE_DL_DCCH_NB: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message_NB,
                 LTE_UL_CCCH_NB: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message_NB,
                 LTE_UL_DCCH_NB: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message_NB,
-            }.get(channel_type)
+            }
+                        
+            if ext_header_ver in (9, 12):
+                
+                channel_lookup_table.update({
+                    LTE_BCCH_BCH_v9: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
+                    LTE_BCCH_DL_SCH_v9: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
+                    LTE_MCCH_v9: GSMTAP_LTE_RRC_SUB_MCCH_Message,
+                    LTE_PCCH_v9: GSMTAP_LTE_RRC_SUB_PCCH_Message,
+                    LTE_DL_CCCH_v9: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message,
+                    LTE_DL_DCCH_v9: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message,
+                    LTE_UL_CCCH_v9: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message,
+                    LTE_UL_DCCH_v9: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
+                })
+            
+            elif ext_header_ver in (14, 15, 16, 20, 24):
+
+                channel_lookup_table.update({
+                    LTE_BCCH_BCH_v0: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
+                    LTE_BCCH_DL_SCH_v0: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
+                    LTE_MCCH_v0: GSMTAP_LTE_RRC_SUB_MCCH_Message,
+                    LTE_PCCH_v0: GSMTAP_LTE_RRC_SUB_PCCH_Message,
+                    LTE_DL_CCCH_v0: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message,
+                    LTE_DL_DCCH_v0: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message,
+                    LTE_UL_CCCH_v14: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message,
+                    LTE_UL_DCCH_v14: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
+                })
+            
+            elif ext_header_ver in (19, 26):
+                
+                channel_lookup_table.update({
+                    LTE_BCCH_BCH_v19: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
+                    LTE_BCCH_DL_SCH_v19: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
+                    LTE_MCCH_v19: GSMTAP_LTE_RRC_SUB_MCCH_Message,
+                    LTE_PCCH_v19: GSMTAP_LTE_RRC_SUB_PCCH_Message,
+                    LTE_DL_CCCH_v19: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message,
+                    LTE_DL_DCCH_v19: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message,
+                    LTE_UL_CCCH_v19: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message,
+                    LTE_UL_DCCH_v19: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
+                })
+
+            else:
+            
+                channel_lookup_table.update({
+                    LTE_BCCH_BCH_v0: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
+                    LTE_BCCH_DL_SCH_v0: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
+                    LTE_MCCH_v0: GSMTAP_LTE_RRC_SUB_MCCH_Message,
+                    LTE_PCCH_v0: GSMTAP_LTE_RRC_SUB_PCCH_Message,
+                    LTE_DL_CCCH_v0: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message,
+                    LTE_DL_DCCH_v0: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message,
+                    LTE_UL_CCCH_v0: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message,
+                    LTE_UL_DCCH_v0: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
+                })
+                
+            gsmtap_channel_type = channel_lookup_table.get(channel_type)
+            
+            is_uplink = gsmtap_channel_type in (
+                GSMTAP_LTE_RRC_SUB_UL_CCCH_Message,
+                GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
+                GSMTAP_LTE_RRC_SUB_UL_CCCH_Message_NB,
+                GSMTAP_LTE_RRC_SUB_UL_DCCH_Message_NB,
+            )
             
             if gsmtap_channel_type is None:
                 
