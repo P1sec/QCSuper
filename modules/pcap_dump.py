@@ -237,21 +237,24 @@ class PcapDumper(DecodedSibsDumper):
                 LTE_UL_CCCH_NB: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message_NB,
                 LTE_UL_DCCH_NB: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message_NB,
             }
-                        
-            if ext_header_ver in (9, 12):
-                
-                channel_lookup_table.update({
-                    LTE_BCCH_BCH_v9: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
-                    LTE_BCCH_DL_SCH_v9: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
-                    LTE_MCCH_v9: GSMTAP_LTE_RRC_SUB_MCCH_Message,
-                    LTE_PCCH_v9: GSMTAP_LTE_RRC_SUB_PCCH_Message,
-                    LTE_DL_CCCH_v9: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message,
-                    LTE_DL_DCCH_v9: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message,
-                    LTE_UL_CCCH_v9: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message,
-                    LTE_UL_DCCH_v9: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
-                })
             
-            elif ext_header_ver in (14, 15, 16, 20, 24):
+            # The v9 channel type values don't overlap a lot with other
+            # existing values as they start at "8", so handle these in
+            # all case and allow these to be erased with other values
+            # subsequently
+                        
+            channel_lookup_table.update({
+                LTE_BCCH_BCH_v9: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
+                LTE_BCCH_DL_SCH_v9: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
+                LTE_MCCH_v9: GSMTAP_LTE_RRC_SUB_MCCH_Message,
+                LTE_PCCH_v9: GSMTAP_LTE_RRC_SUB_PCCH_Message,
+                LTE_DL_CCCH_v9: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message,
+                LTE_DL_DCCH_v9: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message,
+                LTE_UL_CCCH_v9: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message,
+                LTE_UL_DCCH_v9: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
+            })
+        
+            if ext_header_ver in (14, 15, 16, 20, 24):
 
                 channel_lookup_table.update({
                     LTE_BCCH_BCH_v0: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
@@ -264,7 +267,7 @@ class PcapDumper(DecodedSibsDumper):
                     LTE_UL_DCCH_v14: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
                 })
             
-            elif ext_header_ver in (19, 26):
+            elif ext_header_ver == 19 or ext_header_ver >= 26:
                 
                 channel_lookup_table.update({
                     LTE_BCCH_BCH_v19: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
@@ -277,7 +280,7 @@ class PcapDumper(DecodedSibsDumper):
                     LTE_UL_DCCH_v19: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
                 })
 
-            else:
+            elif ext_header_ver not in (9, 12):
             
                 channel_lookup_table.update({
                     LTE_BCCH_BCH_v0: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
