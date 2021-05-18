@@ -257,12 +257,12 @@ class PcapDumper(DecodedSibsDumper):
             if ext_header_ver in (14, 15, 16, 20, 24):
 
                 channel_lookup_table.update({
-                    LTE_BCCH_BCH_v0: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
-                    LTE_BCCH_DL_SCH_v0: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
-                    LTE_MCCH_v0: GSMTAP_LTE_RRC_SUB_MCCH_Message,
-                    LTE_PCCH_v0: GSMTAP_LTE_RRC_SUB_PCCH_Message,
-                    LTE_DL_CCCH_v0: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message,
-                    LTE_DL_DCCH_v0: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message,
+                    LTE_BCCH_BCH_v14: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
+                    LTE_BCCH_DL_SCH_v14: GSMTAP_LTE_RRC_SUB_BCCH_DL_SCH_Message,
+                    LTE_MCCH_v14: GSMTAP_LTE_RRC_SUB_MCCH_Message,
+                    LTE_PCCH_v14: GSMTAP_LTE_RRC_SUB_PCCH_Message,
+                    LTE_DL_CCCH_v14: GSMTAP_LTE_RRC_SUB_DL_CCCH_Message,
+                    LTE_DL_DCCH_v14: GSMTAP_LTE_RRC_SUB_DL_DCCH_Message,
                     LTE_UL_CCCH_v14: GSMTAP_LTE_RRC_SUB_UL_CCCH_Message,
                     LTE_UL_DCCH_v14: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
                 })
@@ -304,7 +304,8 @@ class PcapDumper(DecodedSibsDumper):
             
             if gsmtap_channel_type is None:
                 
-                warning('Unknown log type received for LOG_LTE_RRC_OTA_MSG_LOG_C: %d' % channel_type)
+                warning('Unknown log type received for LOG_LTE_RRC_OTA_MSG_LOG_C version %d: %d' % (
+                    ext_header_ver, channel_type))
                 return
             
             packet = build_gsmtap_ip(GSMTAP_TYPE_LTE_RRC, gsmtap_channel_type, packet, is_uplink)
