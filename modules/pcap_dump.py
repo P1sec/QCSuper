@@ -69,8 +69,6 @@ class PcapDumper(DecodedSibsDumper):
             
             (channel_type, radio_bearer, length), signalling_message = unpack('<BBH', log_payload[:4]), log_payload[4:]
             
-            packet = signalling_message[:length]
-            
             is_uplink = channel_type in (
                 RRCLOG_SIG_UL_CCCH,
                 RRCLOG_SIG_UL_DCCH
@@ -88,7 +86,9 @@ class PcapDumper(DecodedSibsDumper):
             
             if channel_type >= 0x80: # We are in presence of an explicit ARFCN/PSC
                 channel_type -= 0x80
-                log_payload = log_payload[4:]
+                signalling_message = signalling_message[4:]
+            
+            packet = signalling_message[:length]
             
             gsmtap_channel_type = {
                 RRCLOG_SIG_UL_CCCH: GSMTAP_RRC_SUB_UL_CCCH_Message,
