@@ -351,6 +351,12 @@ class BaseInput:
                 time() # Timestamp
             )
         
+        elif opcode == DIAG_MULTI_RADIO_CMD_F:
+            
+            # See https://github.com/fgsect/scat/blob/f1538b3/parsers/qualcomm/qualcommparser.py#L331
+            
+            self.dispatch_received_diag_packet(payload[7:])
+        
         elif opcode in (DIAG_MSG_F, DIAG_EXT_MSG_F, DIAG_EXT_MSG_TERSE_F, DIAG_QSR_EXT_MSG_TERSE_F): # This is a "message" string
             
             self.dispatch_diag_message(opcode, payload)
