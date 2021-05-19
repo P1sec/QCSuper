@@ -197,7 +197,7 @@ class PcapDumper(DecodedSibsDumper):
             
             (ext_header_ver, rrc_rel, rrc_ver, bearer_id, phy_cellid), ext_header = unpack('<BBBBH', log_payload[:6]), log_payload[6:]
             
-            if ext_header_ver >= 26: # Handle post-NR releases
+            if ext_header_ver >= 25: # Handle post-NR releases
                 (ext_header_ver, rrc_rel, rrc_ver, nc_rrc_rel, bearer_id, phy_cellid), ext_header = unpack('<BBBHBH', log_payload[:8]), log_payload[8:]
             
             # Parse extended header
