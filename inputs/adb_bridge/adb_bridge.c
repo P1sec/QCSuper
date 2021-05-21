@@ -715,6 +715,7 @@ next:
         }
 
     } else {
+        error("ioctl");
         // LOGD("Failed to enable logging mode: %s.\n", strerror(errno));
     }
 
