@@ -34,6 +34,12 @@ DL_PACCH_CHANNEL = 0x83
 PACKET_CHANNEL_REQUEST = 0x20
 
 """
+    These are 5G-related log types.
+"""
+
+LOG_NR_RRC_OTA_MSG_LOG_C = 0xb821
+
+"""
     These are 4G-related log types.
 """
 
