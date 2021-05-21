@@ -6,5 +6,5 @@ For looking at the Python source code performing the upload process to the Andro
 
 If you wish to recompile the C program, you can follow these steps:
 
-* Download the latest [Android NDK toolchain](https://developer.android.com/ndk/downloads/), and [build it](https://developer.android.com/ndk/guides/standalone_toolchain) for ARM
-* Execute `make CC=$clang_path` where `$clang_path` is the path to the `arm-linux-androideabi-clang` binary in the toolchain you have built.
+* Download and extract the latest pre-built [Android NDK toolchain](https://developer.android.com/ndk/downloads/)
+* Execute `make CC=$clang_path` where `$clang_path` is the path to the `arm*-linux-androideabi*-clang` binary in the pre-build toolchain that you have download and extracted.
