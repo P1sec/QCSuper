@@ -254,7 +254,7 @@ class PcapDumper(DecodedSibsDumper):
                 LTE_UL_DCCH_v9: GSMTAP_LTE_RRC_SUB_UL_DCCH_Message,
             })
         
-            if ext_header_ver in (14, 15, 16, 20, 24):
+            if ext_header_ver in (14, 15, 16, 20, 24, 25):
 
                 channel_lookup_table.update({
                     LTE_BCCH_BCH_v14: GSMTAP_LTE_RRC_SUB_BCCH_BCH_Message,
