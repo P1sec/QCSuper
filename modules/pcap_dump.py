@@ -210,9 +210,7 @@ class PcapDumper(DecodedSibsDumper):
                 
                 header_spec = '<' + freq_type + 'HB4xH'
             
-            (freq, sfn, channel_type, length), signalling_message = unpack_from(header_spec, ext_header), ext_header[calcsize(header_spec):]
-            
-            packet = signalling_message[:length]
+            (freq, sfn, channel_type, length), packet = unpack_from(header_spec, ext_header), ext_header[calcsize(header_spec):]
             
             # GSMTAP definition:
             # - https://github.com/wireshark/wireshark/blob/wireshark-2.5.0/epan/dissectors/packet-gsmtap.h
