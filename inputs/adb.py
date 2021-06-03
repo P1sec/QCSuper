@@ -317,7 +317,7 @@ class AdbConnector(HdlcMixin, BaseInput):
                     print('\nThe connection to the adb bridge was closed, or ' +
                         'preempted by another QCSuper instance')
                     
-                    exit()
+                    return
                 
                 self.packet_buffer += socket_read
             

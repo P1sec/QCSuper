@@ -6,6 +6,8 @@ from logging import debug, info, warning
 from threading import Condition, Lock
 from traceback import print_exc
 from time import sleep, time
+from subprocess import run
+from shutil import which
 from struct import pack
 
 from modules.cli import CommandLineInterface
@@ -146,6 +148,15 @@ class BaseInput:
                     Thread(target = self._deinit_modules, daemon = True).start()
 
                     self.shutdown_event.wait()
+
+                # When the daemon thread holding a terminal CLI is present, an abrupt
+                # shutdown may break the state of the terminal (suppress echo). Avoid
+                # this by restoring the TTY's state.
+                
+                if which('stty'):
+                    run(['stty', 'sane'])
+                
+                # Apply any further actions to clean up the Input class's
             
                 self.__del__()
     

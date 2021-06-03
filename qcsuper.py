@@ -22,6 +22,7 @@ from inputs.adb import AdbConnector
 parser = ArgumentParser(description = 'A tool for communicating with the Qualcomm DIAG protocol (also called QCDM or DM).')
 
 parser.add_argument('--cli', action = 'store_true', help = 'Use a command prompt, allowing for interactive completion of commands.')
+parser.add_argument('--efs-shell', action = 'store_true', help = 'Spawn an interactive shell to navigate within the embedded filesystem (EFS) of the baseband device.')
 parser.add_argument('-v', '--verbose', action = 'store_true', help = 'Add output for each received or sent Diag packet.')
 
 input_mode = parser.add_argument_group(title = 'Input mode', description = 'Choose an one least input mode for DIAG data.')
@@ -102,10 +103,19 @@ parse_modules_args(args)
 
 if args.cli:
     
-    if diag_input.modules:
+    if diag_input.modules or args.efs_shell:
         exit('Error: you can not both specify the use of CLI and a module')
     
     diag_input.add_module(CommandLineInterface(diag_input, parser, parse_modules_args))
+
+if args.efs_shell:
+    
+    if diag_input.modules:
+        exit('Error: you can not both specify the use of EFS shell and a module')
+        
+    from modules.efs_shell import EfsShell
+    diag_input.add_module(EfsShell(diag_input))
+        
 
 
 if not diag_input.modules:

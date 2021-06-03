@@ -67,7 +67,7 @@ Then, you need to ensure that you can reach your device using `adb`. You can fin
 
 Then, follow these links on order to:
 
-* [Install Python 3.6](https://www.python.org/ftp/python/3.6.8/python-3.6.8.exe) or more recent (be sure to check options to include it into PATH, install it for all users and install pip)
+* [Install Python 3.7](https://www.python.org/ftp/python/3.7.9/python-3.7.9.exe) or more recent (be sure to check options to include it into PATH, install it for all users and install pip)
 * [Install Wireshark 2.6](https://1.eu.dl.wireshark.org/win32/Wireshark-win32-2.6.9.exe) or more recent
 * [Download and extract QCSuper](https://github.com/P1sec/QCSuper/archive/master.zip)
 
@@ -118,7 +118,7 @@ sudo ./qcsuper.py --usb-modem /dev/ttyHS2 --wireshark-live
 Here is the current usage notice for QCSuper:
 
 ```
-usage: qcsuper.py [-h] [--cli] [-v]
+usage: qcsuper.py [-h] [--cli] [--efs-shell] [-v]
                   (--adb | --usb-modem TTY_DEV | --dlf-read DLF_FILE | --json-geo-read JSON_FILE)
                   [--info] [--pcap-dump PCAP_FILE] [--wireshark-live]
                   [--memory-dump OUTPUT_DIR] [--dlf-dump DLF_FILE]
@@ -133,6 +133,8 @@ optional arguments:
   -h, --help            show this help message and exit
   --cli                 Use a command prompt, allowing for interactive
                         completion of commands.
+  --efs-shell           Spawn an interactive shell to navigate within the
+                        embedded filesystem (EFS) of the baseband device.
   -v, --verbose         Add output for each received or sent Diag packet.
 
 Input mode:
