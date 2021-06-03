@@ -89,9 +89,9 @@ class EfsShell:
                 
                 else:
                     
-                    sub_command_name : str = user_args[0]
-                    
-                    if sub_command_name in self.sub_parsers._name_parser_map:
+                    if user_args and user_args[0] in self.sub_parsers._name_parser_map:
+                        
+                        sub_command_name : str = user_args[0]
                         
                         sub_parser_args : List[str] = user_args[1:]
                         
