@@ -181,13 +181,6 @@ class CommandLineInterface:
         )
     
     def on_deinit(self):
-
-        # When the daemon thread holding the CLI is present, an abrupt shutdown
-        # may break the state of the terminal (suppress echo). Avoid this by
-        # restoring the TTY's state.
-        
-        if which('stty'):
-            run(['stty', 'sane'])
         
         print('')
 
