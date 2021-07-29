@@ -14,7 +14,7 @@ After having [installed](#installation) it, you can plug your rooted phone in US
 
 It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) in order to communicate with your phone's baseband.
 
-**You want support, to report that you device works or does not work or you'd like to join development doing research on the Diag protocol? You can [come talk on IRC (`#qcsuper` at Freenode)](http://webchat.freenode.net/?channels=#qcsuper) or open a [Github issue](https://github.com/P1sec/QCSuper/issues/new).**
+**You want support, or to report that you device works or does not work? You can open a [Github issue](https://github.com/P1sec/QCSuper/issues/new).**
 
 ## Table of contents
 
@@ -233,7 +233,7 @@ QCSuper was successfully tested with:
 
 Is it however aiming to be compatible with the widest possible range of devices based on a Qualcomm chipset, for the capture part.
 
-Do no hesitate to report whether your device is successfully working or not through the [IRC channel](http://webchat.freenode.net/?channels=#qcsuper), or opening a [Github issue](https://github.com/P1sec/QCSuper/issues/new).
+Do no hesitate to report whether your device is successfully working or not through opening a [Github issue](https://github.com/P1sec/QCSuper/issues/new).
 
 ## Related tools using the Diag protocol
 
