@@ -85,7 +85,7 @@ class InfoRetriever:
             
             (msm_hw_version_format, msm_hw_version, mobile_model_id), ver_strings = unpack('<B2xII', payload[:11]), payload[11:]
             
-            build_id, model_string, _ = ver_strings.split(b'\x00')
+            build_id, model_string, _ = ver_strings.split(b'\x00', 2)
             
             if msm_hw_version_format == 2:
                 version, partnum = msm_hw_version >> 28, (msm_hw_version >> 12) & 0xffff
