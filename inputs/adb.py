@@ -44,19 +44,22 @@ def run_safe(args, **kwargs):
 
 QCSUPER_TCP_PORT = 43555
 
-if platform in ('cygwin', 'win32'):
-    adb_exe = ADB_BIN_DIR + '/adb_windows.exe'
-elif platform == 'darwin':
-    adb_exe = which('adb') or ADB_BIN_DIR + '/adb_macos'
-else:
-    adb_exe = which('adb') or ADB_BIN_DIR + '/adb_linux'
-
-
 class AdbConnector(HdlcMixin, BaseInput):
     
-    def __init__(self):
-        
+    def __init__(self, adb_exe = None, adb_host = 'localhost'):
         self._disposed = False
+
+        if not adb_exe:
+            if platform in ('cygwin', 'win32'):
+                self.adb_exe = ADB_BIN_DIR + '/adb_windows.exe'
+            elif platform == 'darwin':
+                self.adb_exe = which('adb') or ADB_BIN_DIR + '/adb_macos'
+            else:
+                self.adb_exe = which('adb') or ADB_BIN_DIR + '/adb_linux'
+        else:
+            self.adb_exe = adb_exe
+
+        self.adb_host = adb_host
 
         self.su_command = '%s'
         
@@ -111,13 +114,13 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             # "adb shell su" didn't work, try "adb root"
             
-            adb = run_safe([adb_exe, 'root'], stdout = PIPE, stderr = STDOUT, stdin = DEVNULL)
+            adb = run_safe([self.adb_exe, 'root'], stdout = PIPE, stderr = STDOUT, stdin = DEVNULL)
             
             if b'cannot run as root' in adb.stdout:
                 
                 exit('Could not get root to adb, is your phone rooted?')
         
-            run_safe([adb_exe, 'wait-for-device'], stdin = DEVNULL, check = True)
+            run_safe([self.adb_exe, 'wait-for-device'], stdin = DEVNULL, check = True)
         
         # Once root has been obtained, send batch commands to check
         # for the presence of /dev/diag through adb
@@ -134,7 +137,7 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         # Upload the adb_bridge
         
-        adb = run_safe([adb_exe, 'push', ADB_BRIDGE_DIR + '/adb_bridge', ANDROID_TMP_DIR],
+        adb = run_safe([self.adb_exe, 'push', ADB_BRIDGE_DIR + '/adb_bridge', ANDROID_TMP_DIR],
             
             stdin = DEVNULL, stdout = PIPE, stderr = STDOUT
         )
@@ -161,9 +164,9 @@ class AdbConnector(HdlcMixin, BaseInput):
             'chmod 755 ' + ANDROID_TMP_DIR + '/adb_bridge'
         )
         
-        run_safe([adb_exe, 'forward', 'tcp:' + str(QCSUPER_TCP_PORT), 'tcp:' + str(QCSUPER_TCP_PORT)], check = True, stdin = DEVNULL)
+        run_safe([self.adb_exe, 'forward', 'tcp:' + str(QCSUPER_TCP_PORT), 'tcp:' + str(QCSUPER_TCP_PORT)], check = True, stdin = DEVNULL)
         
-        self.adb_proc = Popen([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % (ANDROID_TMP_DIR + '/adb_bridge')],
+        self.adb_proc = Popen([self.adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % (ANDROID_TMP_DIR + '/adb_bridge')],
             
             stdin = DEVNULL, stdout = PIPE, stderr = STDOUT,
             preexec_fn = setpgrp,
@@ -182,10 +185,10 @@ class AdbConnector(HdlcMixin, BaseInput):
                 stderr.flush()
 
         self.socket = socket(AF_INET, SOCK_STREAM)
-        
+
         try:
             
-            self.socket.connect(('localhost', QCSUPER_TCP_PORT))
+            self.socket.connect((self.adb_host, QCSUPER_TCP_PORT))
         
         except Exception:
             
@@ -212,7 +215,7 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             if self.can_use_exec_out is None:
                         
-                adb = run_safe([adb_exe, 'exec-out', 'id'],
+                adb = run_safe([self.adb_exe, 'exec-out', 'id'],
                     
                     stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
                 )
@@ -221,7 +224,7 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             # Can we execute commands?
             
-            adb = run_safe([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % command],
+            adb = run_safe([self.adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % command],
                 
                 stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
             )
@@ -262,7 +265,7 @@ class AdbConnector(HdlcMixin, BaseInput):
         lat = None
         lng = None
         
-        gps_info = run_safe([adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', 'dumpsys', 'location'], stdout = PIPE)
+        gps_info = run_safe([self.adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', 'dumpsys', 'location'], stdout = PIPE)
         gps_info = gps_info.stdout.decode('utf8')
         
         gps_info = search('(\d+\.\d+),(\d+\.\d+)', gps_info)
@@ -340,7 +343,6 @@ class AdbConnector(HdlcMixin, BaseInput):
                 
                 self.dispatch_received_diag_packet(unframed_message)
 
-            
     def dispose(self, disposing=True):
 
         if not self._disposed:
