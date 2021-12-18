@@ -56,6 +56,8 @@ class AdbConnector(HdlcMixin, BaseInput):
     
     def __init__(self):
         
+        self._disposed = False
+
         self.su_command = '%s'
         
         # Whether we can use "adb exec-out" instead
@@ -249,18 +251,6 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         return adb.stdout.decode('utf8').strip()
     
-    def __del__(self):
-        
-        try:
-            
-            if hasattr(self, 'adb_proc'):
-
-                self.adb_proc.terminate()
-        
-        except Exception:
-            
-            pass
-    
     def send_request(self, packet_type, packet_payload):
         
         raw_payload = self.hdlc_encapsulate(bytes([packet_type]) + packet_payload)
@@ -351,3 +341,10 @@ class AdbConnector(HdlcMixin, BaseInput):
                 self.dispatch_received_diag_packet(unframed_message)
 
             
+    def dispose(self, disposing=True):
+
+        if not self._disposed:
+            if hasattr(self, 'adb_proc'):
+                self.adb_proc.terminate()
+
+            self._disposed = True

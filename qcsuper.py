@@ -126,5 +126,8 @@ if not diag_input.modules:
 
 # Enter the main loop.
 
-diag_input.run()
+try:
+    diag_input.run()
+finally:
+    diag_input.dispose()
 

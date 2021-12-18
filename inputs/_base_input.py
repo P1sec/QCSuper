@@ -463,9 +463,15 @@ class BaseInput:
             
             self.remove_module(module)
     
+
+    def dispose(self, disposing=True):
+        """
+            Release unmanaged ressources
+        """
+        pass 
+
     def __del__(self):
-        
-        pass
+        self.dispose(disposing=False)
 
 import protocol.messages
 
