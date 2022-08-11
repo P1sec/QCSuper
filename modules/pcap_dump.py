@@ -4,9 +4,16 @@ from modules._enable_log_mixin import EnableLogMixin, TYPES_FOR_RAW_PACKET_LOGGI
 from modules.decoded_sibs_dump import DecodedSibsDumper
 from struct import pack, unpack, unpack_from, calcsize
 from subprocess import Popen, PIPE, DEVNULL, STDOUT
+from os.path import expandvars, dirname, realpath
+from os import makedirs, getenv, listdir
+from shutil import copy2, which
 from logging import warning
-from shutil import which
+from sys import platform
 import gzip
+
+MODULES_DIR = realpath(dirname(__file__))
+SRC_WIRESHARK_PLUGIN_DIR = realpath(MODULES_DIR + '/wireshark_plugin')
+
 
 try:
     from os import setpgrp, getenv, setresgid, setresuid, setgroups, getgrouplist
@@ -21,7 +28,10 @@ from protocol.gsmtap import *
 
 """
     This module registers various diag LOG events, and tries to generate a
-    PCAP of GSMTAP 2G, 3G or 4G frames from it.
+    PCAP of GSMTAP 2G, 3G, 4G or 5G frames from it.
+    
+    5G frames shall be decoded from a .PCAP or .DLF file only if
+    the QCSuper Wireshark plugin is installed or loaded.
 """
 
 class PcapDumper(DecodedSibsDumper):
@@ -48,11 +58,49 @@ class PcapDumper(DecodedSibsDumper):
         
         self.limit_registered_logs = TYPES_FOR_RAW_PACKET_LOGGING
         
-        self.current_rat = None # Radio access technology: "2g", "3g", "4g"
+        self.current_rat = None # Radio access technology: "2g", "3g", "4g", "5g"
         
         self.reassemble_sibs = reassemble_sibs
         self.decrypt_nas = decrypt_nas
         self.include_ip_traffic = include_ip_traffic
+        
+        # Install the QCSuper Lua Wireshark plug-in, except if the
+        # corresponding environment variable is set.
+        
+        self.install_wireshark_plugin()
+    
+    def install_wireshark_plugin(self): # WIP
+        
+        # See: https://www.wireshark.org/docs/wsug_html_chunked/ChPluginFolders.html
+        # See: https://docs.python.org/3/library/os.path.html#os.path.expandvars
+        # See: https://docs.python.org/3/library/sys.html#sys.platform
+        
+        if getenv('DONT_INSTALL_WIRESHARK_PLUGIN'):
+            
+            return
+        
+        if platform in ('win32', 'cygwin'):
+            
+            DST_WIRESHARK_PLUGIN_DIR = expandvars('%APPDATA%\Wireshark\plugins')
+        
+        else:
+            
+            DST_WIRESHARK_PLUGIN_DIR = expandvars('$HOME/.local/lib/wireshark/plugins')
+        
+        if '%' in DST_WIRESHARK_PLUGIN_DIR or '$' in DST_WIRESHARK_PLUGIN_DIR:
+            return # Variable expansion did not work
+        
+        try:
+            makedirs(DST_WIRESHARK_PLUGIN_DIR, exist_ok = True)
+            
+            for file_name in listdir(SRC_WIRESHARK_PLUGIN_DIR):
+                
+                copy2(SRC_WIRESHARK_PLUGIN_DIR + '/' + file_name,
+                    DST_WIRESHARK_PLUGIN_DIR + '/' + file_name)
+        
+        except OSError:
+            return # Could not create or write to the Wireshark plug-in directory, non-fatal
+        
     
     """
         Process a single log packet containing raw signalling or data traffic,
@@ -343,6 +391,14 @@ class PcapDumper(DecodedSibsDumper):
             
             packet = build_gsmtap_ip(GSMTAP_TYPE_ABIS, GSMTAP_CHANNEL_SDCCH, signalling_message, is_uplink)
         
+        elif log_type == LOG_NR_RRC_OTA_MSG_LOG_C: # LOG_NR_RRC_OTA_MSG_LOG_C = 0xb821
+            
+            # WIP
+            
+            self.current_rat = '5g'
+        
+            packet = build_nr_rrc_log_ip(log_payload)
+            
         if packet:
             
             try:

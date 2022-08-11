@@ -45,6 +45,8 @@ To use it, your phone must be rooted or expose a diag service port over USB. In 
 
 In order to open PCAP files produced by QCSuper, you can use any Wireshark 2.x for 2G/3G frames, but you need at least Wireshark 2.5.x for 4G frames (and 2.6.x for individual NAS messages decrypted out of 4G frames). Ubuntu currently provides a recent enough build for all versions.
 
+Decoding 5G frames was tested under Wireshark 3.6.x and will be done through automatically installing a Wireshark Lua plug-in (in `%APPDATA%\Wireshark\plugins` under Windows or in `~/.local/lib/wireshark/plugins` under Linux and macOS), which can be avoided through setting the `DONT_INSTALL_WIRESHARK_PLUGIN=1` environment variable if you are willing to avoid this.
+
 ### Ubuntu and Debian installation
 
 Open a terminal and type the following:

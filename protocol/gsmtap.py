@@ -6,6 +6,9 @@ from struct import pack, unpack
 # - https://github.com/wireshark/wireshark/blob/wireshark-2.5.0/epan/dissectors/packet-gsmtap.c#L82
 # - http://osmocom.org/projects/baseband/wiki/GSMTAP
 
+GSMTAP_PORT = 4729
+NR_RRC_UDP_PORT = 47928
+
 def build_gsmtap_ip(gsmtap_protocol, gsmtap_channel_type, payload, is_uplink):
     
     packet = pack('>BBBxHxx4xBxxx',
@@ -19,8 +22,8 @@ def build_gsmtap_ip(gsmtap_protocol, gsmtap_channel_type, payload, is_uplink):
     # UDP:
     
     packet = pack('>HHHH',
-        4729, # From GSMTAP UDP port
-        4729, # To GSMTAP UDP port
+        GSMTAP_PORT, # From GSMTAP UDP port
+        GSMTAP_PORT, # To GSMTAP UDP port
         len(packet) + 8, # Total length
         0 # Ignore checksum
     ) + packet
@@ -39,6 +42,33 @@ def build_gsmtap_ip(gsmtap_protocol, gsmtap_channel_type, payload, is_uplink):
         0,0,0,0, # From 0.0.0.0
         0,0,0,0, # To 0.0.0.0
     ) + packet
+
+def build_nr_rrc_log_ip(log_payload : bytes):
+
+    # UDP:
+
+    packet = pack('>HHHH',
+        NR_RRC_UDP_PORT, # From custom QCSuper plug-in UDP port
+        NR_RRC_UDP_PORT, # To custom QCSuper plug-in UDP port
+        len(log_payload) + 8, # Total length
+        0 # Ignore checksum
+    ) + log_payload
+    
+    # IP:
+    
+    return pack('>BBHHHBBH8B',
+        (4 << 4) | 5, # IPv4 version and header words
+        0, # DSCP
+        len(packet) + 20, # Total length
+        0, # Identification
+        0, # Fragment offset
+        64, # Time to live
+        17, # Protocol: UDP
+        0, # Ignore checksum
+        0,0,0,0, # From 0.0.0.0
+        0,0,0,0, # To 0.0.0.0
+    ) + packet
+
 
 
 GSMTAP_TYPE_UM = 0x01
