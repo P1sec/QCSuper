@@ -54,6 +54,9 @@ class FileType:
             else:
                 file_obj = fdopen(dup(stdout.fileno()), 'wb' if 'b' in self.mode else 'w')
                 dup2(stderr.fileno(), stdout.fileno())
+            
+            file_obj.appending_to_file = False
+            
             return file_obj
         
         elif path[-3:] != '.gz':
