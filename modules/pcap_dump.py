@@ -6,6 +6,7 @@ from struct import pack, unpack, unpack_from, calcsize
 from subprocess import Popen, PIPE, DEVNULL, STDOUT
 from os.path import expandvars, dirname, realpath
 from os import makedirs, getenv, listdir
+from traceback import print_exc
 from shutil import copy2, which
 from logging import warning
 from sys import platform
@@ -544,21 +545,27 @@ class WiresharkLive(PcapDumper):
     
     def detach_process(self):
         
-        # Don't be hit by CTRL+C
-        
-        setpgrp()
-        
-        # Drop privileges if needed
-        
-        uid, gid = getenv('SUDO_UID'), getenv('SUDO_GID')
-        
-        if uid and gid:
+        try:
             
-            uid, gid = int(uid), int(gid)
-
-            setgroups(getgrouplist(getpwuid(uid).pw_name, gid))
-
-            setresgid(gid, gid, -1)
+            # Don't be hit by CTRL+C
             
-            setresuid(uid, uid, -1)
+            setpgrp()
+            
+            # Drop privileges if needed
+            
+            uid, gid = getenv('SUDO_UID'), getenv('SUDO_GID')
+            
+            if uid and gid:
+                
+                uid, gid = int(uid), int(gid)
+
+                setgroups(getgrouplist(getpwuid(uid).pw_name, gid))
+
+                setresgid(gid, gid, -1)
+                
+                setresuid(uid, uid, -1)
+        
+        except Exception:
+            
+            print_exc()
 
