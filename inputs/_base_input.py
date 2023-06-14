@@ -368,7 +368,7 @@ class BaseInput:
             
             self.dispatch_received_diag_packet(payload[7:])
         
-        elif opcode in (DIAG_MSG_F, DIAG_EXT_MSG_F, DIAG_EXT_MSG_TERSE_F, DIAG_QSR_EXT_MSG_TERSE_F): # This is a "message" string
+        elif opcode in (DIAG_MSG_F, DIAG_EXT_MSG_F, DIAG_EXT_MSG_TERSE_F, DIAG_QSR_EXT_MSG_TERSE_F, DIAG_QSR4_EXT_MSG_TERSE_F): # This is a "message" string
             
             self.dispatch_diag_message(opcode, payload)
         
