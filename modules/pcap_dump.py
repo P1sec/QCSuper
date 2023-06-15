@@ -265,7 +265,7 @@ class PcapDumper(DecodedSibsDumper):
             # - https://github.com/wireshark/wireshark/blob/wireshark-2.5.0/epan/dissectors/packet-gsmtap.h
             # - http://osmocom.org/projects/baseband/wiki/GSMTAP
             
-            if channel_type in (254, 255, RRCLOG_EXTENSION_SIB, RRCLOG_SIB_CONTAINER):
+            if channel_type in (254, 255):
                 return # Frames containing only a MIB or extension SIB, as already present in RRC frames, ignoring
             
             if LTE_UL_DCCH_NB < channel_type <= LTE_UL_DCCH_NB + 9:
