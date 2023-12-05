@@ -59,8 +59,8 @@ When using the interactive prompt (`--cli`), the moment where the `on_init` call
 An input is a Python class which may expose different methods:
 
 * `__init__`: will optionally receive arguments from the command line or interactive prompt (passed in sequence from the entry point `qcsuper.py`).
-* `send_request`: this function will be called when a module wants to send a Diag request packet.
-* `read_loop`: Diag responses packets will be read and dispatched from here.
+* `send_request`: this function will be called when a module wants to send a Diag request packet (involving possible utility functions such as `hdlc_encapsulate` from `HdlcMixin`).
+* `read_loop`: Diag responses packets will be read and dispatched from here, involving the use of the private `dispatch_received_diag_packet` method inherited from `BaseInput` (and other possible utility functions, such as `hdlc_decapsulate` from `HdlcMixin`).
 
 Inputs inherit from the `BaseInput` class which exposes a method called `send_recv`, allowing to write a request then read the response, wrapping transparently thread synchronization primitives.
 

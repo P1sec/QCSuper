@@ -1,12 +1,12 @@
 # QCSuper
 
-**QCSuper** is a tool communicating with Qualcomm-based phones and modems, allowing to **capture raw 2G/3G/4G** radio frames, among other things.
+**QCSuper** is a tool communicating with Qualcomm-based phones and modems, allowing to **capture raw 2G/3G/4G** (and for certain models 5G) radio frames, among other things.
 
 It will allow you to **generate PCAP** captures of it using either a rooted Android phone, an USB dongle or an existing capture in another format.
 
 ![Screenshot of using QCSuper along with Wireshark](docs/sample_pcaps/Wireshark%20screenshot.png?raw=true)
 
-After having [installed](#installation) it, you can plug your rooted phone in USB and using it is as simple as:
+After having [installed](#installation) it, you can plug your rooted phone in USB and using it, with a compatible device, is as simple as:
 
 ```
 ./qcsuper.py --adb --wireshark-live
@@ -14,7 +14,7 @@ After having [installed](#installation) it, you can plug your rooted phone in US
 
 It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) in order to communicate with your phone's baseband.
 
-**You want support, or to report that you device works or does not work? You can open a [Github issue](https://github.com/P1sec/QCSuper/issues/new).**
+**You are willing to report that your device works or does not work? You can open a [Github issue](https://github.com/P1sec/QCSuper/issues/new).**
 
 ## Table of contents
 
@@ -39,7 +39,7 @@ It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) 
 
 ## Installation
 
-QCSuper was tested and developed on Ubuntu 16.04, 18.04 and Windows 7. It depends on a few Python modules.
+QCSuper was tested and developed on Ubuntu LTS 16.04 - 22.04 and Windows 7+. It depends on a few Python modules.
 
 To use it, your phone must be rooted or expose a diag service port over USB. In order to check for compatibility with your phone, look up the phone's model on a site like [GSMArena](https://www.gsmarena.com/) and check whether it has a Qualcomm processor.
 
@@ -58,12 +58,12 @@ cd qcsuper
 
 # Install dependencies
 sudo apt install python3-pip wireshark
-sudo pip3 install --upgrade pyserial crcmod https://github.com/P1sec/pycrate/archive/master.zip
+sudo pip3 install --upgrade pyserial pyusb crcmod https://github.com/P1sec/pycrate/archive/master.zip
 ```
 
 ### Windows installation
 
-On Windows, you will need to download and install your phone's USB drivers from your phone model. There is no generic way, search for your phone's model + "USB driver" or "ADB driver" on Google for instructions.
+On Windows, in order for ADB to run, you will need to download and install your phone's USB drivers from your phone model. There is no generic way, search for your phone's model + "USB driver" or "ADB driver" on Google for instructions.
 
 Then, you need to ensure that you can reach your device using `adb`. You can find a tutorial on how to download and setup `adb` [here](https://www.xda-developers.com/install-adb-windows-macos-linux/). The `adb shell` command must display a prompt to continue.
 
@@ -107,14 +107,44 @@ In order to use QCSuper, you specify one input (e.g: `--adb` (Android phone), `-
 A few commands you can type are:
 
 ```bash
-# Open Wireshark directly, using a rooted Android phone as an input
-./qcsuper.py --adb --wireshark-live
+# Open Wireshark directly, using a rooted Android phone as an input,
+# for compatible phones:
+$ ./qcsuper.py --adb --wireshark-live
 
 # Same, but dump to a PCAP file instead of opening Wireshark directly
-./qcsuper.py --adb --pcap-dump /tmp/my_pcap.pcap
+$ ./qcsuper.py --adb --pcap-dump /tmp/my_pcap.pcap
 
-# Same, but using an USB modem exposing a Diag serial port
-sudo ./qcsuper.py --usb-modem /dev/ttyHS2 --wireshark-live
+# Same, but using an USB modem/phone exposing a Diag serial port
+# directly over USB, in the case where the "--adb" mode does not
+# work directly:
+
+# - With a compatible Android phone where the Diag port over USB has
+#   been manually enabled by the user (see the "How to manually enable
+#   the diagnostic ports on my phone" section below for a summary of
+#   how this may be possible with most Qualcomm-based models)
+#
+#   In this case, you may try:
+./qcsuper.py --usb-modem auto --wireshark-live
+#   Or, if selecting manually the USB device corresponding to the 
+#   Diag-enabled phone turns to be requried:
+$ lsusb
+(..)
+Bus 001 Device 076: ID 05c6:9091 Qualcomm, Inc. Intex Aqua Fish & Jolla C Diagnostic Mode
+$ ./qcsuper.py --usb-modem 1d6b:0003 --wireshark-live # With vendor ID:product ID...
+$ ./qcsuper.py --usb-modem 002:001 --wireshark-live # ...or with bus ID:device ID
+# Or, if selecting the configuration index and interface index (both 0-indexed) turn to be required:
+$ lsusb -v
+(..)
+$ ./qcsuper.py --usb-modem 1d6b:0003:0:0 --wireshark-live # With vendor ID:product ID:configuration:interface...
+$ ./qcsuper.py --usb-modem 002:001:0:0 --wireshark-live # ...or with bus ID:device ID:configuration:interface
+
+# - With a generic serial-over-USB device where the "usbserial" module has
+#   loaded a /dev/ttyUSB{0,2} device corresponding to the diagnostic port:
+$ sudo ./qcsuper.py --usb-modem /dev/ttyUSB2 --wireshark-live
+
+# - With an Option device where the "hsoserial" module has loaded a
+#   /dev/ttyHS{0,2} device corresponding to the diagnostic port:
+$ sudo ./qcsuper.py --usb-modem /dev/ttyHS2 --wireshark-live
 ```
 
 Here is the current usage notice for QCSuper:
@@ -195,9 +225,107 @@ Memory dumping options:
 
 Specifying `-` to pipe data from stdin or towards stdout is supported (gzipped content may not be detected).
 
+### How to root my phone?
+
+This README file is not a guide over how to root your phone (getting your phone to enable you to run commands such as "`su`").
+
+In most of the recent Android devices, you must first use the "OEM/bootloader unlock" option prevent in the developer settings of the telephone in order to unlock the bootloader, then you may use a tool such as [Magisk](https://topjohnwu.github.io/Magisk/install.html) that will enable you to obtain a patched image for your phone's bootloader, that you will then be able to load onto your phone in [`fastboot` mode](https://en.wikipedia.org/wiki/Fastboot).
+
+QCSuper will have more chance to work easily on your Qualcomm-based device when your phone is rooted, but there often are ways to enable the Qualcomm Diag USB mode (also known as "DM", Diag Monitor) on your phone without having your phone rooted. This [depends on](https://band.radio/diag) your phone vendor and goes through, for example, typing a magic combination of digits onto your phone's dialer keypad. Please see the "*How to manually enable the diagnostic ports on my phone?*" section below for more details.
+
+Before rooting your phone, remember that you may also want to use load an alternate recovery image such as TWRP onto your OEM-unlocked phone in order to perform partition backup using a tool such as [TWRP](https://twrp.me/) (it may be as simple as loading the image through Fastboot, enabling the ADB link in the settings of TWRP, and using `adb pull` onto selected partitions in the `/dev/block/by-name` folder`).
+
+For specific inscriptions on rooting or enabling the Diag mode on your phone model, you may search the information over the XDA-developers forum with appropriate keywords.
+
+### How to manually enable the diagnostic ports on my phone?
+
+On Qualcomm/MSM Android-based devices bearning Linux kernel 4.9 or earlier (this includes roughly part of devices up to Android 12 and all devices before Android 10), Qualcomm-based Android devices normally contain a system device called `/dev/diag` which allows to communicate data to the diagnostics port of the baseband.
+
+On Qualcomm/MSM Android-based devices bearing Linux kernel 4.14 or later (this includes roughly part of devices from Android 10 and all devices from Android 13), **`/dev/diag` disappeared**, as the corresponding `diagchar` module is disabled by default recent AOSP/Linux kernels.
+
+On the devices bearing a Linux 4.9 or earlier MSM kernel, when using the `--adb` flag, QCSuper will try to connect through ADB automatically, will then attempt to transfer an executable utility connecting to the `/dev/diag` device, in order to launch it as root using a command such as `su -c /data/local/tmp/adb_bridge`, and subsequently transmit the diagnostics data with the device over TCP (also forwarding the corresponing TCP port through ADB).
+
+On the devices bearing a Linux 4.14 or later MSM kernel, when using the `--adb` flag, QCSuper will try to connect through ADB automatically, will then [TODO MMR: /!\\ XX TO BE IMPLEMENTED IN SECOND-PLACE] attempt to mode-switch the USB port of the phone using a command such as `su -c 'setprop sys.usb.config diag,adb'`, and then execute the equivalent of the `--usb-modem auto` flag (see below).
+
+The `--usb-modem <value>` flag allows QCSuper to **connect to the Qualcomm diagnostics port over a pseudo-serial port over USB**, independently from ADB, which is the most common way to connect to the Qualcomm diag protocol of an Android-based phone using an external device.
+
+In order to use `--usb-modem <value>` flag, the Qualcomm diagnostic port must be enabled on the corresponding phone, otherwise said the phone should have been USB mode-switched beforehand.
+
+The most common way to USB mode-switch your device is to execute a command such as `setprop sys.usb.config diag,adb` as root, but there may be other ways (with certain phone vendors) to enable the Qualcomm diagnostics-over-USB mode, see for example [this page](https://band.radio/diag) for possible ways, for certain devices, to enable Diag without root - it often imples to type a magic combination of digits over the phone's dialer keypad.
+
+In other devices, it may also be possible to use an APK file signed by the phone vendor and with System-related permissions in order to enable the Diag mode without rooting (search about the `com.longcheertel.midtest` APK for Xiaomi-based devices for example).
+
+Once your device has been correctly most-switched, running the `getprop sys.usb.config` command over ADB should display a text string containing `diag`.
+
+On the side of your computer, then, running `lsusb` (on Linux) should display a line referring your device, for example:
+
+```
+Bus 001 Device 076: ID 05c6:9091 Qualcomm, Inc. Intex Aqua Fish & Jolla C Diagnostic Mode
+```
+
+Note the `001:076` (bus index/device index identifier), and the `05c6:9091` (vendor ID/product ID) information present in this output.
+
+Once you have this information available, **you may try to use a flag such as `--usb-modem 05c6:9091` or `--usb-modem 001:076`** with QCSuper (please respect the digit padding).
+
+If this isn't conclusive, you may use the `lsusb -v -d 05c6:9091` command, which should produce detailed output, including the USB configurations, interfaces and endpoints for the corresponding USB device:
+
+```
+Bus 001 Device 027: ID 05c6:9091 Qualcomm, Inc. Intex Aqua Fish & Jolla C Diagnostic Mode
+Device Descriptor:
+  bLength                18
+  bDescriptorType         1
+  bcdUSB               2.01
+  bDeviceClass            0 
+  bDeviceSubClass         0 
+  bDeviceProtocol         0 
+  bMaxPacketSize0        64
+  idVendor           0x05c6 Qualcomm, Inc.
+  idProduct          0x9091 Intex Aqua Fish & Jolla C Diagnostic Mode
+  bcdDevice            5.04
+  iManufacturer           1 Xiaomi
+  iProduct                2 Mi 11
+  iSerial                 3 d94f4341
+  bNumConfigurations      1
+  Configuration Descriptor:
+    bLength                 9
+    bDescriptorType         2
+    wTotalLength       0x0086
+    bNumInterfaces          4
+    bConfigurationValue     1
+    iConfiguration          4 Default composition
+    bmAttributes         0x80
+      (Bus Powered)
+    MaxPower              500mA
+    Interface Descriptor:
+      bLength                 9
+      bDescriptorType         4
+      bInterfaceNumber        0
+      bAlternateSetting       0
+      bNumEndpoints           2
+      bInterfaceClass       255 Vendor Specific Class
+      bInterfaceSubClass    255 Vendor Specific Subclass
+      bInterfaceProtocol     48 
+      iInterface              0 
+[...]
+```
+
+QCSuper allows you to manually select the index of the configuration and the interface you are wishing to attempt to connect to on the concerned device, in the case where it isn't detected correctly. For example, the `--usb-modem 05c6:9091:0:0` flag will select respectively the first configuration and the first interface on the concerned device (these indexes are zero-indexed).  `--usb-modem 05c6:9091:1:4` will select the fifth interface over the second configuration.
+
+If the configuration and interface indexes detail isn't specified, it will select either the first interface descriptor where `bInterfaceProtocol=48` or alternately where `bInterfaceClass` and `bInterfaceSubClass` both equal 255.
+
+When using the `--usb-modem auto` flag, either the first device exposing an USB interface compilant with this criteria is picked, or the first device matching the `/dev/ttyUSB*` (`usbserial` module) or `/dev/ttyHS*` (`hso` module) is selected (see the "Using QCSuper with an USB modem" section below).
+
+*Alternately*, on Linux, it may also be possible to manually create `/dev/ttyUSB*` endpoints corresponding to the interfaces of a given USB device, that you will able to can connect using QCSuper with a flag such as `--usb-modem /dev/ttyUSB0` (this may require running QCSuper with root rights), using the `usbserial` module. For this, you can use a command such as:
+
+```
+sudo rmmod usbserial
+sudo modprobe usbserial vendor=0x05c6 product=0x9091
+```
+
+
 ## Using QCSuper with an USB modem
 
-You can use QCSuper with an USB modem exposing a Diag port using the `--usb-modem <device>` option, where `<device>` is the name of the pseudo-serial device on Linux (such as `/dev/ttyUSB0`, `/dev/ttyHS2` and other possibilites) or of the COM port on Windows (such as `COM3`).
+You can use QCSuper with an USB modem exposing a Diag port using the `--usb-modem <device>` option, where `<device>` is the name of the pseudo-serial device on Linux (such as `/dev/ttyUSB0`, `/dev/ttyHS2` and other possibilites) or of the COM port on Windows (such as `COM2`, `COM3`).
 
 Please note that in most setups, you will need to run QCSuper as root in order to be able to use this mode, notably for handling serial port interference.
 
