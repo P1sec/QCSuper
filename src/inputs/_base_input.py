@@ -473,10 +473,10 @@ class BaseInput:
     def __del__(self):
         self.dispose(disposing=False)
 
-import protocol.messages
+import src.protocol.messages
 
 message_id_to_name = {
     value: key
-    for key, value in protocol.messages.__dict__.items()
+    for key, value in src.protocol.messages.__dict__.items()
     if key.startswith('DIAG_')
 }
