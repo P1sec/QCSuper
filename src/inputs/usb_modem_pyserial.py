@@ -224,7 +224,7 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
         
         while True:
                 
-            # Read more bytes until a trailed character is found
+            # Read more bytes until a trailer character is found
 
             raw_payload = b''
             
