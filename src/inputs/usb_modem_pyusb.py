@@ -1,12 +1,7 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
 
-from src.inputs.usb_modem_argparser import UsbModemArgParser, \
-    UsbModemArgType
-
-from src.inputs.usb_modem_pyusb_devfinder import PyusbDevInterface, \
-    PyusbDevNotFoundReason
-
+from src.inputs.usb_modem_pyusb_devfinder import PyusbDevInterface
 from src.inputs._hdlc_mixin import HdlcMixin
 from src.inputs._base_input import BaseInput
 
@@ -18,27 +13,9 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
 
     dev_intf : Optional[PyusbDevInterface] = None
 
-    def __init__(self, usb_arg : UsbModemArgParser):
+    def __init__(self, dev_intf : PyusbDevInterface):
 
-        if usb_arg.arg_type == UsbModemArgType.pyusb_vid_pid:
-            self.dev_intf = PyusbDevInterface.find_by_vid_pid(usb_arg.pyusb_vid, usb_arg.pyusb_pid)
-        elif usb_arg.arg_type == UsbModemArgType.pyusb_vid_pid_cfg_intf:
-            self.dev_intf = PyusbDevInterface.find_by_vid_pid(usb_arg.pyusb_vid, usb_arg.pyusb_pid,
-                usb_arg.pyusb_cfg, usb_arg.pyusb_intf)
-        elif usb_arg.arg_type == UsbModemArgType.pyusb_bus_device:
-            self.dev_intf = PyusbDevInterface.find_by_bus_device(usb_arg.pyusb_bus, usb_arg.pyusb_device)
-        elif usb_arg.arg_type == UsbModemArgType.pyusb_bus_device_cfg_intf:
-            self.dev_intf = PyusbDevInterface.find_by_bus_device(usb_arg.pyusb_bus, usb_arg.pyusb_device,
-                usb_arg.pyusb_cfg, usb_arg.pyusb_intf)
-        elif usb_arg.arg_type == UsbModemArgType.pyusb_auto:
-            self.dev_intf = PyusbDevInterface.find_auto()
-        else:
-            assert False # unreachable
-
-        if self.dev_intf.not_found_reason:
-            exit('[!] No Qualcomm Diag interface was found with the specified ' +
-                 'criteria. Please be more specific.')
-            # TODO: Print a more user-friendly message here?
+        self.dev_intf = dev_intf
 
         # TODO : Test with n devices...
 
@@ -93,9 +70,6 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
                     assert data_read
                 
                 except Exception:
-                    print("[!] Can't read to the USB device. Maybe that you need " +
-                       "root/administrator privileges, or that the device was " +
-                       "unplugged?")
 
                     exit()
                 
