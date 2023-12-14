@@ -247,7 +247,7 @@ On Qualcomm/MSM Android-based devices **bearing Linux kernel 4.14 or later** (th
 
 On the devices **bearing a Linux 4.9 or earlier MSM kernel**, when using the `--adb` flag, QCSuper will **try to connect through ADB automatically**, will then attempt to transfer an executable utility connecting to the `/dev/diag` device, in order to launch it as root using a command such as `su -c /data/local/tmp/adb_bridge`, and subsequently **transmit the diagnostics data with the device over TCP** (also forwarding the corresponing TCP port through ADB).
 
-On the devices **bearing a Linux 4.14 or later MSM kernel**, when using the `--adb` flag, QCSuper will try to connect through ADB automatically, will then attempt to **mode-switch the USB port** of the phone using a command such as `su -c 'setprop sys.usb.config diag,adb'`, and then execute the **equivalent of the `--usb-modem auto` flag (see below)**.
+On the devices **bearing a Linux 4.14 or later MSM kernel**, when using the `--adb` flag, QCSuper will try to connect through ADB automatically, will then attempt to **mode-switch the USB port** of the phone using a command such as `su -c 'setprop sys.usb.config diag,adb'`, and then execute the **equivalent of the `--usb-modem auto` flag** (see below).
 
 The `--usb-modem <value>` flag allows QCSuper to **connect to the Qualcomm diagnostics port over a pseudo-serial port over USB**, independently from ADB, which is the most common way to connect to the Qualcomm diag protocol of an Android-based phone using an external device.
 
