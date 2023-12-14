@@ -12,6 +12,12 @@ After having [installed](#installation) it, you can plug your rooted phone in US
 ./qcsuper.py --adb --wireshark-live
 ```
 
+Or, if you have manually enabled exposing a Diag port over your phone (the corresponding procedure may vary depending on your phone modem and manufacturer, see below for more explanations), or if you have plugged a mobile broadband dongle:
+
+```
+./qcsuper.py --usb-modem auto --wireshark-live
+```
+
 It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) in order to communicate with your phone's baseband.
 
 **You are willing to report that your device works or does not work? You can open a [Github issue](https://github.com/P1sec/QCSuper/issues/new).**
@@ -71,6 +77,7 @@ Then, follow these links on order to:
 
 * [Install Python 3.7](https://www.python.org/ftp/python/3.7.9/python-3.7.9.exe) or more recent (be sure to check options to include it into PATH, install it for all users and install pip)
 * [Install Wireshark 2.6](https://1.eu.dl.wireshark.org/win32/Wireshark-win32-2.6.9.exe) or more recent
+* [Install libusb-win32 1.2.3.7](https://github.com/mcuee/libusb-win32/releases/download/snapshot_1.2.7.3/libusb-win32-devel-filter-1.2.7.3.exe) or more recent (this is the last supported version on Windows 7)
 * [Download and extract QCSuper](https://github.com/P1sec/QCSuper/archive/master.zip)
 
 To install the required Python modules, open your command prompt and type:
