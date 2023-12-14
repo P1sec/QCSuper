@@ -120,7 +120,11 @@ $ ./qcsuper.py --adb --wireshark-live
 
 # Same, but dump to a PCAP file instead of opening Wireshark directly
 $ ./qcsuper.py --adb --pcap-dump /tmp/my_pcap.pcap
+```
 
+Or, if it is not simple enough to work:
+
+```bash
 # Same, but using an USB modem/phone exposing a Diag serial port
 # directly over USB, in the case where the "--adb" mode does not
 # work directly:
@@ -139,18 +143,18 @@ $ lsusb
 Bus 001 Device 076: ID 05c6:9091 Qualcomm, Inc. Intex Aqua Fish & Jolla C Diagnostic Mode
 $ ./qcsuper.py --usb-modem 1d6b:0003 --wireshark-live # With vendor ID:product ID...
 $ ./qcsuper.py --usb-modem 002:001 --wireshark-live # ...or with bus ID:device ID
-# Or, if selecting the configuration index and interface index (both 0-indexed) turn to be required:
+# Or, if selecting the configuration number and interface number (referred as "bConfigurationValue" and "bInterfaceNumber" in the USB desciprtors) turn to be required:
 $ lsusb -v
 (..)
-$ ./qcsuper.py --usb-modem 1d6b:0003:0:0 --wireshark-live # With vendor ID:product ID:configuration:interface...
-$ ./qcsuper.py --usb-modem 002:001:0:0 --wireshark-live # ...or with bus ID:device ID:configuration:interface
+$ ./qcsuper.py --usb-modem 1d6b:0003:1:0 --wireshark-live # With vendor ID:product ID:configuration:interface...
+$ ./qcsuper.py --usb-modem 002:001:1:0 --wireshark-live # ...or with bus ID:device ID:configuration:interface
 
 # - With a generic serial-over-USB device where the "usbserial" module has
-#   loaded a /dev/ttyUSB{0,2} device corresponding to the diagnostic port:
+#   loaded a /dev/ttyUSB{0-9} device corresponding to the diagnostic port:
 $ sudo ./qcsuper.py --usb-modem /dev/ttyUSB2 --wireshark-live
 
 # - With an Option device where the "hsoserial" module has loaded a
-#   /dev/ttyHS{0,2} device corresponding to the diagnostic port:
+#   /dev/ttyHS{0-9} device corresponding to the diagnostic port:
 $ sudo ./qcsuper.py --usb-modem /dev/ttyHS2 --wireshark-live
 ```
 
@@ -311,11 +315,9 @@ QCSuper allows you to manually select the identifiers of the configuration and t
 
 If the configuration and interface indexes detail isn't specified, it will select the first interface descriptor on the system USB bus which is found to match the following criteria, by order of preference:
 * `bInterfaceClass=255/bInterfaceSubClass=255/bInterfaceProtocol=48/bNumEndpoints=2`
-* `bInterfaceClass=255/bInterfaceSubClass=255/bInterfaceProtocol=48`
 * `bInterfaceClass=255/bInterfaceSubClass=255/bInterfaceProtocol=255/bNumEndpoints=2`
-* `bInterfaceClass=255/bInterfaceSubClass=255/bInterfaceProtocol=255`
 
-When using the `--usb-modem auto` flag, either the first device exposing an USB interface compilant with this criteria is picked, or the first device matching the `/dev/ttyUSB*` (`usbserial` module) or `/dev/ttyHS*` (`hso` module) is selected (see the "Using QCSuper with an USB modem" section below).
+When using the `--usb-modem auto` flag, the first device exposing an USB interface compilant with this criteria is picked, and if needed on Linux the underlying `/dev/ttyUSB*` (`usbserial` module) or `/dev/ttyHS*` (`hso` module) character device is selected, in the case where the device has been detected and mounted by a kernel module (see the "Using QCSuper with an USB modem" section below).
 
 *Alternately*, on Linux, it may also be possible to manually create `/dev/ttyUSB*` endpoints corresponding to the interfaces of a given USB device, that you will able to can connect using QCSuper with a flag such as `--usb-modem /dev/ttyUSB0` (this may require running QCSuper with root rights), using the `usbserial` module. For this, you can use a command such as:
 
