@@ -307,7 +307,7 @@ Device Descriptor:
 [...]
 ```
 
-QCSuper allows you to manually select the index of the configuration and the interface you are wishing to attempt to connect to on the concerned device, in the case where it isn't detected correctly. For example, the `--usb-modem 05c6:9091:0:0` flag will select respectively the first configuration and the first interface on the concerned device (these indexes are zero-indexed).  `--usb-modem 05c6:9091:1:4` will select the fifth interface over the second configuration.
+QCSuper allows you to manually select the identifiers of the configuration and the interface you are wishing to attempt to connect to on the concerned device (designated as `bConfigurationValue` and `bInterfaceNumber` in the raw USB descriptor), in the case where it isn't detected correctly. For example, the `--usb-modem 05c6:9091:1:0` flag will select respectively configuration 1 and the interface 0 on the concerned device.  `--usb-modem 05c6:9091:1:4` will select the interface 4 over the configuration 1.
 
 If the configuration and interface indexes detail isn't specified, it will select the first interface descriptor on the system USB bus which is found to match the following criteria, by order of preference:
 * `bInterfaceClass=255/bInterfaceSubClass=255/bInterfaceProtocol=48/bNumEndpoints=2`
