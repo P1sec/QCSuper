@@ -168,7 +168,10 @@ class PyusbDevInterface:
 
     not_found_reason : Optional[PyusbDevNotFoundReason] = None
 
-    def __init__(self, usb_arg : UsbModemArgParser):
+    @classmethod
+    def from_arg(cls, usb_arg : UsbModemArgParser):
+        self = cls()
+
         if usb_arg.arg_type == UsbModemArgType.pyusb_vid_pid:
             self._find_by_vid_pid(usb_arg.pyusb_vid, usb_arg.pyusb_pid)
         
@@ -192,6 +195,39 @@ class PyusbDevInterface:
         if not self.not_found_reason:
             self._find_endpoints()
             self._find_char_dev()
+        
+        return self
+    
+    @classmethod
+    def from_bus_port(cls, bus_idx : int, port_idx : int):
+        self = cls()
+
+        base_path = '/sys/bus/usb/devices/%d-%d/' % (bus_idx, port_idx)
+
+        with open(base_path + 'busnum') as fd:
+            bus_num = int(fd.read().strip(), 10)
+        with open(base_path + 'devnum') as fd:
+            dev_num = int(fd.read().strip(), 10)
+
+        self._find_by_bus_device(bus_num, dev_num)
+
+        if not self.not_found_reason:
+            self._find_endpoints()
+            self._find_char_dev()
+
+        return self
+    
+    @classmethod
+    def auto_find(cls):
+        self = cls()
+
+        self._find_auto()
+
+        if not self.not_found_reason:
+            self._find_endpoints()
+            self._find_char_dev()
+
+        return self
 
     def _find_by_vid_pid(self, vid : int, pid : int, cfg_id : int = None,
         intf_id : int = None):

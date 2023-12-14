@@ -2,18 +2,25 @@
 #-*- encoding: Utf-8 -*-
 from subprocess import Popen, run, PIPE, DEVNULL, STDOUT, TimeoutExpired, list2cmdline
 from socket import socket, AF_INET, SOCK_STREAM
-from os.path import realpath, dirname
+from os.path import realpath, dirname, exists
 from sys import stderr, platform
+from traceback import print_exc
+from functools import partial
+from typing import Optional
 from logging import debug
 from shutil import which
 from time import sleep
 from re import search
 
 try:
-    from os import setpgrp
-except ImportError:
-    setpgrp = None
+    from os import setpgrp, getenv, setresgid, setresuid, setgroups, getgrouplist
+    from pwd import getpwuid
+    IS_UNIX = True
 
+except Exception:
+    IS_UNIX = False
+
+from src.inputs.usb_modem_pyusb_devfinder import PyusbDevInterface
 from src.inputs._hdlc_mixin import HdlcMixin
 from src.inputs._base_input import BaseInput
 
@@ -23,11 +30,36 @@ ADB_BIN_DIR = realpath(INPUTS_DIR + '/external/adb')
 
 ANDROID_TMP_DIR = '/data/local/tmp'
 
+def drop_privileges(detach_process = False):
+
+    try:
+        # Don't be hit by CTRL+C
+
+        if detach_process:
+            setpgrp()
+        
+        # Drop privileges if needed
+
+        uid, gid = getenv('SUDO_UID'), getenv('SUDO_GID')
+        
+        if uid and gid:
+            uid, gid = int(uid), int(gid)
+
+            setgroups(getgrouplist(getpwuid(uid).pw_name, gid))
+            setresgid(gid, gid, -1)
+            setresuid(uid, uid, -1)
+    
+    except Exception:
+        print_exc()
+
+if not IS_UNIX:
+    drop_privileges = None
+
 # Print adb output to stdout when "-v" is passed to QCSuper
 
 def run_safe(args, **kwargs):
     debug('[>] Running adb command: ' + list2cmdline(args))
-    result = run(args, **kwargs)
+    result = run(args, preexec_fn = drop_privileges, **kwargs)
     result_string = ((result.stdout or b'') + (result.stderr or b''))
     if result and result_string:
         debug('[<] Obtained result for running "%s": %s' % (list2cmdline(args), result_string))
@@ -68,6 +100,12 @@ class AdbConnector(HdlcMixin, BaseInput):
         self.can_use_exec_out = None # (boolean, None = unknown)
         
         self.ADB_TIMEOUT = 10
+
+        # Use Diag-over-ADB if available for the device.
+
+        self.usb_modem : Optional[PyusbDevInterface] = self._check_for_usb_diag_interface()
+        if self.usb_modem:
+            return
         
         # Send batch commands to check for the writability of /dev/diag through
         # adb, and for the availability of the "su" command
@@ -76,6 +114,7 @@ class AdbConnector(HdlcMixin, BaseInput):
             'test -w /dev/diag; echo DIAG_NOT_WRITEABLE=$?; ' +
             'test -e /dev/diag; echo DIAG_NOT_EXISTS=$?; ' +
             'test -r /dev; echo DEV_NOT_READABLE=$?; ' +
+            'test -e /dev/ffs-diag; echo FFS_DIAG_NOT_HERE=$?; '
             'su -c id'
         )
         
@@ -93,9 +132,10 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             pass
 
-        # If not present, raise an error
+        # If not present and "/dev/ffs-diag" is not here, raise an error
         
-        elif 'DEV_NOT_READABLE=0' in bash_output and 'DIAG_NOT_EXISTS=1' in bash_output:
+        elif ('DEV_NOT_READABLE=0' in bash_output and 'DIAG_NOT_EXISTS=1' in bash_output
+              and 'FFS_DIAG_NOT_HERE=1' in bash_output):
             
             exit('Could not find /dev/diag, does your phone have a Qualcomm chip?')
 
@@ -103,11 +143,11 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         elif 'uid=0' in bash_output:
             
-            self.su_command = 'su -c "%s"'
+            self.su_command = "su -c '%s'"
         
-        elif 'uid=0' in self.adb_shell('su 0,0 sh -c "id"'):
+        elif 'uid=0' in self.adb_shell("su 0,0 sh -c 'id'"):
             
-            self.su_command = 'su 0,0 sh -c "%s"'
+            self.su_command = "su 0,0 sh -c '%s'"
     
         else:
             
@@ -125,34 +165,83 @@ class AdbConnector(HdlcMixin, BaseInput):
         # for the presence of /dev/diag through adb
         
         bash_output = self.adb_shell(
-            'test -e /dev/diag; echo DIAG_NOT_EXISTS=$?'
+            'test -e /dev/diag; echo DIAG_NOT_EXISTS=$?; ' +
+            'test -e /dev/ffs-diag; echo FFS_DIAG_NOT_HERE=$?'
         )
-        
+
         # If not present, raise an error
         
-        if 'DIAG_NOT_EXISTS=1' in bash_output:
+        if 'DIAG_NOT_EXISTS=1' in bash_output and 'FFS_DIAG_NOT_HERE=1' in bash_output:
             
             exit('Could not find /dev/diag, does your phone have a Qualcomm chip?')
         
-        # Upload the adb_bridge
-        
-        adb = run_safe([self.adb_exe, 'push', ADB_BRIDGE_DIR + '/adb_bridge', ANDROID_TMP_DIR],
+        if 'DIAG_NOT_EXISTS=1' in bash_output and 'FFS_DIAG_NOT_HERE=0' in bash_output:
             
-            stdin = DEVNULL, stdout = PIPE, stderr = STDOUT
-        )
-    
-        if b'error' in adb.stdout or adb.returncode != 0:
-            
-            exit(adb.stdout.decode('utf8'))
-        
-        # Launch the adb_bridge
-        
-        self._relaunch_adb_bridge()
+            # Mode-switch the device
 
-        self.packet_buffer = b''
+            for command in ['setprop sys.usb.config diag,adb', 'setprop sys.usb.config diag,diag_mdm,adb']:
+
+                adb = run_safe([self.adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % command],
+                    
+                    stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
+                )
+
+                sleep(2)
+
+                self.usb_modem : Optional[PyusbDevInterface] = self._check_for_usb_diag_interface()
+                if self.usb_modem:
+                    return
+
+                sleep(4)
+
+                self.usb_modem : Optional[PyusbDevInterface] = self._check_for_usb_diag_interface()
+                if self.usb_modem:
+                    return
+
+                self.usb_modem = PyusbDevInterface.auto_find()
+                if not self.usb_modem.not_found_reason:
+                    return
+            
+            exit('ERROR: Could not automatically mode-switch your device to enable ' +
+                'Diag-over-USB. Please read the QCSuper README for more background over this.')
+            
+        else:
+
+            # Upload the adb_bridge
+            
+            adb = run_safe([self.adb_exe, 'push', ADB_BRIDGE_DIR + '/adb_bridge', ANDROID_TMP_DIR],
+                
+                stdin = DEVNULL, stdout = PIPE, stderr = STDOUT
+            )
         
-        super().__init__()
+            if b'error' in adb.stdout or adb.returncode != 0:
+                
+                exit(adb.stdout.decode('utf8'))
+            
+            # Launch the adb_bridge
+            
+            self._relaunch_adb_bridge()
+
+            self.packet_buffer = b''
+            
+            super().__init__()
     
+    def _check_for_usb_diag_interface(self) -> Optional[PyusbDevInterface]:
+
+        devices_list = run_safe([self.adb_exe, 'devices', '-l'],
+            stdin = DEVNULL, stdout = PIPE, stderr = STDOUT).stdout.decode('utf8')
+
+        device_num = search(r'usb:(\d+)-(\d+)', devices_list)
+        if device_num and exists('/sys/bus/usb/devices'):
+            bus_idx = int(device_num.group(1), 10)
+            port_idx = int(device_num.group(2), 10)
+
+            dev_intf = PyusbDevInterface.from_bus_port(bus_idx, port_idx)
+            if not dev_intf.not_found_reason:
+                return dev_intf
+    
+        return None
+
     def _relaunch_adb_bridge(self):
         
         if hasattr(self, 'adb_proc'):
@@ -168,7 +257,7 @@ class AdbConnector(HdlcMixin, BaseInput):
         self.adb_proc = Popen([self.adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % (ANDROID_TMP_DIR + '/adb_bridge')],
             
             stdin = DEVNULL, stdout = PIPE, stderr = STDOUT,
-            preexec_fn = setpgrp,
+            preexec_fn = lambda: partial(drop_privileges, True),
             bufsize = 0, universal_newlines = True
         )
     
@@ -222,7 +311,7 @@ class AdbConnector(HdlcMixin, BaseInput):
                 self.can_use_exec_out = (adb.returncode == 0)
             
             # Can we execute commands?
-            
+
             adb = run_safe([self.adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % command],
                 
                 stdin = DEVNULL, stdout = PIPE, stderr = STDOUT, timeout = self.ADB_TIMEOUT
