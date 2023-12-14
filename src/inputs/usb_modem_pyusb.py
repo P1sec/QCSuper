@@ -17,10 +17,6 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
 
         self.dev_intf = dev_intf
 
-        # TODO : Test with n devices...
-
-        # print(self.dev_intf.interface) # DEBUG
-        # print(self.dev_intf.interface.__dict__)
         try:
             status = self.dev_intf.device.is_kernel_driver_active(self.dev_intf.interface.index)
         except Exception:
@@ -31,8 +27,6 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
                      'or "hso". Please pass directly a device name using an option like "--usb-modem /dev/ttyUSB2" ' +
                      'or "/dev/ttyHS0" (on Linux) or "COM0" (on Windows) if it applies, or unmount the corresponding ' +
                      'driver.')
-        # self.dev_intf.device.set_configuration(self.dev_intf.configuration) # DEBUG Commented
-        # TODO : Handle non-root users?
 
         self.received_first_packet = False
 
@@ -42,7 +36,6 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
         
         if self.dev_intf and self.dev_intf.device:
             dispose_resources(self.dev_intf.device)
-        # XX# TO BE TESTED
 
     def send_request(self, packet_type, packet_payload):
         
@@ -53,7 +46,6 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
         except USBError:
             print("[!] Can't write to the USB device. Maybe that you need " +
                 "root/administrator privileges, or that the device was unplugged?")
-        # XX TO BE TESTED
 
     def read_loop(self):
         
