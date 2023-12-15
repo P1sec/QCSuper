@@ -6,6 +6,7 @@ from src.inputs._hdlc_mixin import HdlcMixin
 from src.inputs._base_input import BaseInput
 
 from usb.util import dispose_resources
+from traceback import print_exc
 from usb.core import USBError
 from typing import Optional
 
@@ -27,6 +28,12 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
                      'or "hso". Please pass directly a device name using an option like "--usb-modem /dev/ttyUSB2" ' +
                      'or "/dev/ttyHS0" (on Linux) or "COM0" (on Windows) if it applies, or unmount the corresponding ' +
                      'driver.')
+
+        try:
+            # Needed on Windows, won't always work on Linux:
+            self.dev_intf.device.set_configuration(self.dev_intf.configuration.bConfigurationValue)
+        except USBError:
+            pass
 
         self.received_first_packet = False
 

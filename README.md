@@ -45,7 +45,7 @@ It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) 
 
 ## Installation
 
-QCSuper was tested and developed on Ubuntu LTS 16.04 - 22.04 and Windows 7+. It depends on a few Python modules.
+QCSuper was tested and developed on Ubuntu LTS 16.04 - 22.04 and Windows 7+. It depends on a few Python modules. It is advised to use Linux for better compatibility.
 
 To use it, your phone must be rooted or expose a diag service port over USB. In order to check for compatibility with your phone, look up the phone's model on a site like [GSMArena](https://www.gsmarena.com/) and check whether it has a Qualcomm processor.
 
@@ -69,9 +69,11 @@ sudo pip3 install --upgrade pyserial pyusb crcmod https://github.com/P1sec/pycra
 
 ### Windows installation
 
-On Windows, in order for ADB to run, you will need to download and install your phone's USB drivers from your phone model. There is no generic way, search for your phone's model + "USB driver" or "ADB driver" on Google for instructions.
+QCSuper can run on Windows, but you should beforehand ensure that Google's ADB prompt correctly runs on your machine with your device, and you should as well manually create `libusb-win32` filters (through the utility accessible in the Start Menu after installing it) in the case where your device directly needs to connect to the Diag port over pseudo-serial USB. (Please note that if you mode-switch your device, the associated USB PID/VID may change and it may require to redo driver associations both in the Windows peripherial devices managers and in the `libusb-win32` filter creation utlity)
 
-Then, you need to ensure that you can reach your device using `adb`. You can find a tutorial on how to download and setup `adb` [here](https://www.xda-developers.com/install-adb-windows-macos-linux/). The `adb shell` command must display a prompt to continue.
+On Windows, you may need (in addition to Google's ADB kernel drivers) to download and install your phone's USB drivers from your phone model. Please search for your phone's model + "USB driver" or "ADB driver" on Google for instructions.
+
+Then, you need to ensure that you can reach your device using `adb`. You can find a tutorial on how to download and setup `adb` [here](https://www.xda-developers.com/install-adb-windows-macos-linux/). The `adb.exe shell` (or whatever executable path you use, a copy of the ADB executable is present in the `src/inputs/external/adb` folder of QCSuper) command must display a prompt to continue.
 
 Then, follow these links on order to:
 
