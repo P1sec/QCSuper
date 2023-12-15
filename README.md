@@ -76,7 +76,7 @@ Then, you need to ensure that you can reach your device using `adb`. You can fin
 Then, follow these links on order to:
 
 * [Install Python 3.7](https://www.python.org/ftp/python/3.7.9/python-3.7.9.exe) or more recent (be sure to check options to include it into PATH, install it for all users and install pip)
-* [Install Wireshark 2.6](https://1.eu.dl.wireshark.org/win32/Wireshark-win32-2.6.9.exe) or more recent
+* [Install Wireshark 3.6](https://2.na.dl.wireshark.org/win64/all-versions/Wireshark-win64-3.6.19.exe) or more recent
 * [Install libusb-win32 1.2.3.7](https://github.com/mcuee/libusb-win32/releases/download/snapshot_1.2.7.3/libusb-win32-devel-filter-1.2.7.3.exe) or more recent (this is the last supported version on Windows 7)
 * [Download and extract QCSuper](https://github.com/P1sec/QCSuper/archive/master.zip)
 
