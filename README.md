@@ -59,7 +59,7 @@ Open a terminal and type the following:
 
 ```bash
 # Download QCSuper
-git clone git@github.com:P1sec/QCSuper.git qcsuper
+git clone https://github.com/P1sec/QCSuper.git qcsuper
 cd qcsuper
 
 # Install dependencies
