@@ -55,7 +55,7 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
             self.dev_intf.write_endpoint.write(raw_payload)
         except USBError:
             error("[!] Can't write to the USB device. Maybe that you need " +
-                "root/administrator privileges, or that the device was unplugged?")
+                "root/administrator privileges, or that the device was unplugged? " + format_exc())
 
     def read_loop(self):
         
