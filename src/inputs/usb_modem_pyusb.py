@@ -68,7 +68,7 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
             while not raw_payload.endswith(self.TRAILER_CHAR):
                 
                 try:
-                    data_read = bytes(self.dev_intf.read_endpoint.read(1024 * 1024 * 10))
+                    data_read = bytes(self.dev_intf.read_endpoint.read(1024 * 1024 * 10, timeout = 0x7fffffff))
                     assert data_read
                 
                 except Exception:
