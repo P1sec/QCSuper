@@ -2,12 +2,12 @@
 #-*- encoding: Utf-8 -*-
 from subprocess import Popen, run, PIPE, DEVNULL, STDOUT, TimeoutExpired, list2cmdline
 from socket import socket, AF_INET, SOCK_STREAM
+from logging import debug, error, info, warning
 from os.path import realpath, dirname, exists
 from sys import stderr, platform
 from traceback import print_exc
 from functools import partial
 from typing import Optional
-from logging import debug
 from shutil import which
 from time import sleep
 from re import search
@@ -122,9 +122,10 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         if not search('DIAG_NOT_WRITEABLE=[01]', bash_output):
             
-            print('Could not run a bash command your phone, is adb functional?')
+            error('Could not run a bash command your phone, is adb functional?')
             
-            exit(bash_output)
+            error('ADB output: ' + bash_output)
+            exit()
         
         # If writable, continue
         
@@ -136,8 +137,9 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         elif ('DEV_NOT_READABLE=0' in bash_output and 'DIAG_NOT_EXISTS=1' in bash_output
               and 'FFS_DIAG_NOT_HERE=1' in bash_output):
-            
-            exit('Could not find /dev/diag, does your phone have a Qualcomm chip?')
+
+            error('Could not find /dev/diag, does your phone have a Qualcomm chip?')
+            exit()
 
         # If maybe present but not writable, check for root
         
@@ -157,7 +159,8 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             if b'cannot run as root' in adb.stdout:
                 
-                exit('Could not get root to adb, is your phone rooted?')
+                error('Could not get root to adb, is your phone rooted?')
+                exit()
         
             run_safe([self.adb_exe, 'wait-for-device'], stdin = DEVNULL, check = True)
         
@@ -173,7 +176,8 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         if 'DIAG_NOT_EXISTS=1' in bash_output and 'FFS_DIAG_NOT_HERE=1' in bash_output:
             
-            exit('Could not find /dev/diag, does your phone have a Qualcomm chip?')
+            error('Could not find /dev/diag, does your phone have a Qualcomm chip?')
+            exit()
         
         if 'DIAG_NOT_EXISTS=1' in bash_output and 'FFS_DIAG_NOT_HERE=0' in bash_output:
             
@@ -202,8 +206,9 @@ class AdbConnector(HdlcMixin, BaseInput):
                 if not self.usb_modem.not_found_reason:
                     return
             
-            exit('ERROR: Could not automatically mode-switch your device to enable ' +
+            error('Could not automatically mode-switch your device to enable ' +
                 'Diag-over-USB. Please read the QCSuper README for more background over this.')
+            exit()
             
         else:
 
@@ -216,7 +221,8 @@ class AdbConnector(HdlcMixin, BaseInput):
         
             if b'error' in adb.stdout or adb.returncode != 0:
                 
-                exit(adb.stdout.decode('utf8'))
+                error('Could not transfer "adb_bridge" onto the device: ' + adb.stdout.decode('utf8'))
+                exit()
             
             # Launch the adb_bridge
             
@@ -269,8 +275,7 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             else:
                 
-                stderr.write(line)
-                stderr.flush()
+                warning('Unexpected adb_bridge output: ' + line)
 
         self.socket = socket(AF_INET, SOCK_STREAM)
 
@@ -282,7 +287,8 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             self.adb_proc.terminate()
             
-            exit('Could not communicate with the adb_bridge through TCP')
+            error('Could not communicate with the adb_bridge through TCP')
+            exit()
         
         self.received_first_packet = False
     
@@ -319,26 +325,30 @@ class AdbConnector(HdlcMixin, BaseInput):
         
         except TimeoutExpired:
             
-            exit('Communication with adb timed out, is your phone displaying ' +
+            error('Communication with adb timed out, is your phone displaying ' +
                 'a confirmation dialog?')
+            exit()
 
         if b'error' in adb.stdout or adb.returncode != 0:
     
             if b'device not found' in adb.stdout or b'no devices' in adb.stdout:
             
-                exit('Could not connect to the adb, is your phone plugged with USB '
+                error('Could not connect to the adb, is your phone plugged with USB '
                     + 'debugging enabled?')
+                exit()
             
             elif b'confirmation dialog on your device' in adb.stdout:
             
-                exit('Could not connect to the adb, is your phone displaying ' +
+                error('Could not connect to the adb, is your phone displaying ' +
                     'a confirmation dialog?')
+                exit()
             
             else:
                 
-                print('Could not connect to your device through adb')
-            
-            exit(adb.stdout.decode('utf8'))
+                error('Could not connect to your device through adb')
+
+                error('adb output: ' + adb.stdout.decode('utf8'))
+                exit()
         
         return adb.stdout.decode('utf8').strip()
     
@@ -395,7 +405,7 @@ class AdbConnector(HdlcMixin, BaseInput):
                 
                 if not socket_read:
                     
-                    print('\nThe connection to the adb bridge was closed, or ' +
+                    error('\nThe connection to the adb bridge was closed, or ' +
                         'preempted by another QCSuper instance')
                     
                     return

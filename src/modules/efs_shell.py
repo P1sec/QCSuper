@@ -2,6 +2,7 @@
 #-*- encoding: Utf-8 -*-
 from argparse import ArgumentParser, _SubParsersAction, Namespace
 from typing import Dict, List, Set, Sequence, Optional
+from logging import error, warning, debug, info
 from traceback import print_exc
 from struct import pack, unpack
 from subprocess import run
@@ -153,7 +154,8 @@ class EfsShell:
         
         if version != 1:
             
-            exit('[!] Version unsupported')
+            error('EFS version unsupported')
+            exit()
 
     """
         Enable using the direction for the command line.

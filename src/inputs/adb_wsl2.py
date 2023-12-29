@@ -1,3 +1,4 @@
+from logging import error, warning, info, debug
 import os, socket, struct
 from pathlib import Path
 from subprocess import Popen
@@ -14,7 +15,8 @@ class AdbWsl2Connector:
         self._disposed = False
         self._wsl_distro_name = os.environ.get('WSL_DISTRO_NAME', '')
         if not self._wsl_distro_name:
-            exit('WSL_DISTRO_NAME does not exists, are you using WSL2?')
+            error('WSL_DISTRO_NAME does not exists, are you using WSL2?')
+            exit()
 
         bridge_ctrl_path = (Path(__file__).parent / 'adb_wsl2_bridge' / 'adb_wsl2_bridge.ps1').resolve()
         self._win_bridge_ctr_path = f'\\\\wsl$'
@@ -26,7 +28,8 @@ class AdbWsl2Connector:
         
         res = self._up()
         if res != 0:
-            exit(f'Could not successfully setup adb wsl2 bridge: {res}') 
+            error(f'Could not successfully setup adb wsl2 bridge: {res}') 
+            exit()
         self._connector = AdbConnector(adb_exe=adb_exe, adb_host=self._default_gw())
 
     def _default_gw(self) -> str:
@@ -87,11 +90,11 @@ class AdbWsl2Connector:
 
             res = self._down()
             if res != 0:
-                print(f'Could not successfully teardown adb wsl2 bridge: {res}')
+                error(f'Could not successfully teardown adb wsl2 bridge: {res}')
             else:
                 self._disposed = True
         except Exception as e:
-            print(f'Could not successfully teardown adb wsl2 bridge << {e}')
+            error(f'Could not successfully teardown adb wsl2 bridge << {e}')
 
     def __setattr__(self, name: str, value: Any) -> None:
         """

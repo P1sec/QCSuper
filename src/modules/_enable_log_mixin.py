@@ -110,7 +110,7 @@ class EnableLogMixin:
             0xF: 'TOOLS'
         }
         
-        information_string = '[+] Enabled logging for: '
+        information_string = 'Enabled logging for: '
         
         for log_type, log_mask_bitsize in enumerate(log_masks):
             
@@ -138,7 +138,7 @@ class EnableLogMixin:
                 
                 information_string += '%s (%d), ' % (log_types.get(log_type, 'UNKNOWN'), log_type)
         
-        info('\n' + information_string.strip(', ') + '\n')
+        info(information_string.strip(', '))
     
     def _fill_log_mask(self, log_type, num_bits, bit_value = 1):
         

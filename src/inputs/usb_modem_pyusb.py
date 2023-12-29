@@ -2,11 +2,12 @@
 #-*- encoding: Utf-8 -*-
 
 from src.inputs.usb_modem_pyusb_devfinder import PyusbDevInterface
+from logging import error, warning, info, debug
 from src.inputs._hdlc_mixin import HdlcMixin
 from src.inputs._base_input import BaseInput
 
 from usb.util import dispose_resources
-from traceback import print_exc
+from traceback import format_exc
 from usb.core import USBError
 from typing import Optional
 
@@ -24,10 +25,12 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
             pass
         else:
             if status:
-                exit('[!] The USB modem device seems to be taken by a kernel driver, such as "usbserial" ' +
+                error('The USB modem device seems to be taken by a kernel driver, such as "usbserial" ' +
                      'or "hso". Please pass directly a device name using an option like "--usb-modem /dev/ttyUSB2" ' +
                      'or "/dev/ttyHS0" (on Linux) or "COM0" (on Windows) if it applies, or unmount the corresponding ' +
                      'driver.')
+
+                exit()
 
         try:
             # Needed on Windows, won't always work on Linux:
@@ -51,7 +54,7 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
         try:
             self.dev_intf.write_endpoint.write(raw_payload)
         except USBError:
-            print("[!] Can't write to the USB device. Maybe that you need " +
+            error("[!] Can't write to the USB device. Maybe that you need " +
                 "root/administrator privileges, or that the device was unplugged?")
 
     def read_loop(self):
@@ -70,6 +73,7 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
                 
                 except Exception:
 
+                    info('Connection from the mode closed: ' + format_exc())
                     exit()
                 
                 raw_payload += data_read
@@ -77,7 +81,7 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
             # Decapsulate and dispatch
             
             if raw_payload == self.TRAILER_CHAR:
-                print('The modem seems to be unavailable.')
+                error('The modem seems to be unavailable.')
                 
                 exit()
             

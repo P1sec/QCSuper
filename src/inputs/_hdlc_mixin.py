@@ -65,7 +65,7 @@ class HdlcMixin:
             if raise_on_invalid_frame:
                 raise self.InvalidFrameError
             
-            error('Error: Too short Diag frame received')
+            error('Too short Diag frame received')
             
             exit()
         

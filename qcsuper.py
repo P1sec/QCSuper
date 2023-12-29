@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
-from logging import DEBUG, INFO, basicConfig
+from logging import DEBUG, INFO, basicConfig, error, info, debug, warning
 from argparse import RawTextHelpFormatter
 from argparse import ArgumentParser
 from os.path import expanduser
 from pathlib import Path
-from sys import stdout
+from sys import stderr
 
 from src.modules.json_geo_dump import JsonGeoDumper
 from src.modules.memory_dump import MemoryDumper
@@ -81,14 +81,17 @@ memory_options.add_argument('--stop', metavar = 'MEMORY_STOP', default = 'ffffff
 
 args = parser.parse_args()
 
-basicConfig(stream = stdout, level = DEBUG if args.verbose else INFO, format = '%(message)s')
+basicConfig(stream = stderr, level = DEBUG if args.verbose else INFO,
+            format='[%(asctime)s | %(levelname)s @ %(filename)s:%(lineno)d ] %(message)s',
+            force = True, datefmt = '%H:%M:%S')
 
 if args.dlf_read:
     diag_input = DlfReader(args.dlf_read)
 elif args.adb_wsl2:
     win_adb_path = Path(args.adb_wsl2).resolve()
     if not win_adb_path.is_file():
-        exit("--adb-wsl2 is not a valid path to Windows adb executable")
+        error("--adb-wsl2 is not a valid path to Windows adb executable")
+        exit()
     diag_input = AdbWsl2Connector(f'{win_adb_path}')
     if diag_input.usb_modem:
         usb_modem : PyusbDevInterface = diag_input.usb_modem
@@ -107,16 +110,18 @@ elif args.adb:
 elif args.usb_modem:
     usb_arg = UsbModemArgParser(args.usb_modem)
     if not usb_arg.arg_type:
-        exit("Error: You didn't pass a valid value for the --usb-modem " +
+        error("You didn't pass a valid value for the --usb-modem " +
                 "argument. Please check digit padding (if any) and see " +
                 "--help for further details.")
+        exit()
     elif usb_arg.arg_type == UsbModemArgType.pyserial_dev:
         diag_input = UsbModemPyserialConnector(usb_arg.pyserial_device)
     else:
         dev_intf = PyusbDevInterface.from_arg(usb_arg)
         if dev_intf.not_found_reason:
-            exit('[!] No Qualcomm Diag interface was found with the specified ' +
+            error('No Qualcomm Diag interface was found with the specified ' +
                  'criteria. Please be more specific.')
+            exit()
             # TODO: Print a more user-friendly message here?
         elif dev_intf.chardev_if_mounted:
             diag_input = UsbModemPyserialConnector(dev_intf.chardev_if_mounted)
@@ -160,14 +165,16 @@ parse_modules_args(args)
 if args.cli:
     
     if diag_input.modules or args.efs_shell:
-        exit('Error: you can not both specify the use of CLI and a module')
+        error('You can not both specify the use of CLI and a module')
+        exit()
     
     diag_input.add_module(CommandLineInterface(diag_input, parser, parse_modules_args))
 
 if args.efs_shell:
     
     if diag_input.modules:
-        exit('Error: you can not both specify the use of EFS shell and a module')
+        error('You can not both specify the use of EFS shell and a module')
+        exit()
         
     from src.modules.efs_shell import EfsShell
     diag_input.add_module(EfsShell(diag_input))
@@ -178,7 +185,8 @@ if not diag_input.modules:
     
     parser.print_usage()
     
-    exit('Error: You must specify either a module or --cli')
+    error('You must specify either a module or --cli')
+    exit()
 
 # Enter the main loop.
 

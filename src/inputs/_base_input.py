@@ -2,9 +2,9 @@
 #-*- encoding: Utf-8 -*-
 from threading import current_thread, main_thread, Thread
 from struct import pack, unpack, unpack_from, calcsize
-from logging import debug, info, warning
+from logging import debug, info, warning, error
 from threading import Condition, Lock
-from traceback import print_exc
+from traceback import format_exc
 from time import sleep, time
 from subprocess import run
 from shutil import which
@@ -133,7 +133,7 @@ class BaseInput:
             
             except Exception:
                 
-                print_exc()
+                error(format_exc())
 
             finally:
                 
@@ -168,7 +168,7 @@ class BaseInput:
         
         except Exception:
             
-            print_exc()
+            error(format_exc())
         
         finally:
             
@@ -205,7 +205,7 @@ class BaseInput:
         
         except Exception:
             
-            print_exc()
+            error(format_exc())
             
             with self.shutdown_event:
             
@@ -230,7 +230,7 @@ class BaseInput:
                     
             except Exception:
                 
-                print_exc()
+                error(format_exc())
                 self.remove_module(module)
             
             finally:
@@ -278,7 +278,7 @@ class BaseInput:
                 
                 if not response_received:
                     
-                    print('Error: Diag request %s with payload %s timed out' % (
+                    error('Error: Diag request %s with payload %s timed out' % (
                         message_id_to_name.get(req_opcode, req_opcode),
                         repr(req_payload)
                     ))
@@ -293,7 +293,7 @@ class BaseInput:
                 
                 if resp_opcode not in [req_opcode, *OPCODE_ERRORS]:
                     
-                    print(('Error: unmatched response received: %s with payload %s, while ' +
+                    error(('Error: unmatched response received: %s with payload %s, while ' +
                         'the request was %s with payload %s. This is possibly due to ' +
                         'another client talking to the Diag device (which is forbidden).') % (
                         message_id_to_name.get(resp_opcode, resp_opcode),
@@ -310,7 +310,7 @@ class BaseInput:
                 
                 if resp_opcode in OPCODE_ERRORS and not accept_error:
                     
-                    print(('Error: error response received: %s with payload %s, while ' +
+                    error(('Error: error response received: %s with payload %s, while ' +
                         'the request was %s with payload %s. Maybe this operation is ' +
                         'not supported by your device.') % (
                         message_id_to_name.get(resp_opcode, resp_opcode),
@@ -434,7 +434,7 @@ class BaseInput:
                     
                     except Exception:
 
-                        print_exc()
+                        error(format_exc())
                     
                     finally:
                         

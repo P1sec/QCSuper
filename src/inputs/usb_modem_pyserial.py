@@ -2,6 +2,7 @@
 #-*- encoding: Utf-8 -*-
 from subprocess import run, DEVNULL, PIPE, STDOUT, CalledProcessError
 from os import access, R_OK, W_OK, listdir, kill, makedirs, remove
+from logging import error, warning, info, debug
 from os.path import exists, realpath, basename
 from subprocess import Popen
 from signal import SIGTERM
@@ -56,11 +57,13 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
             
             if not exists(device):
                 
-                exit('The device "%s" does not exist' % device)
+                error('The device "%s" does not exist' % device)
+                exit()
             
             elif not access(device, W_OK):
                 
-                exit('Could not open "%s" for write, have you sufficient privileges?' % device)
+                error('Could not open "%s" for write, have you sufficient privileges?' % device)
+                exit()
             
             self.device = device = realpath(device)
             
@@ -107,7 +110,7 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
                     
                     if not access(fds_dir, R_OK):
                         
-                        print(('The process "%s" may possibly be interfering with ' +
+                        error(('The process "%s" may possibly be interfering with ' +
                                "QCSuper, however it can't be confirmed because " +
                                "you're not root. Please re-run with sudo to " +
                                'take appropriate action.') % proc_name)
@@ -135,7 +138,8 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
                             
                             else:
                                 
-                                exit('Cannot connect on the Diag port at the same time')
+                                error('Cannot connect on the Diag port at the same time')
+                                exit()
                     
                 except (FileNotFoundError, PermissionError):
                     
@@ -168,10 +172,10 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
                 
                 except CalledProcessError:
                     
-                    print('Note: cannot restart the ModemManager daemon ' +
+                    warning('Note: cannot restart the ModemManager daemon ' +
                           'through systemd')
                 
-                print('Note: cooperation with ModemManager was enabled ' +
+                warning('Note: cooperation with ModemManager was enabled ' +
                       'through adding a temporary udev rule. This udev ' +
                       'rule will be automatically removed when quitting ' +
                       'QCSuper.')
@@ -180,7 +184,7 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
                 
                 if geteuid() != 0:
                     
-                    print("ModemManager is running on this system, and " +
+                    error("ModemManager is running on this system, and " +
                           "QCSuper needs to add a temporary udev rule to " +
                           "enable cooperation with it on the Diag port.\n\n" +
                           "Please either: \n" +
@@ -192,7 +196,7 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
                 
                 else:
                     
-                    print("Cannot dynamically create an udev rule for preventing " +
+                    warning("Cannot dynamically create an udev rule for preventing " +
                           "ModemManager to access the Diag port:", error)
     
     def __del__(self):
@@ -235,7 +239,7 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
                     assert char_read
                 
                 except Exception:
-                    print('\nThe serial port was closed or preempted by another process.')
+                    error('\nThe serial port was closed or preempted by another process.')
                     
                     exit()
                 
@@ -244,7 +248,7 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
             # Decapsulate and dispatch
             
             if raw_payload == self.TRAILER_CHAR:
-                print('The modem seems to be unavailable.')
+                error('The modem seems to be unavailable.')
                 
                 exit()
             
