@@ -86,7 +86,10 @@ class HdlcMixin:
             if raise_on_invalid_frame:
                 raise self.InvalidFrameError
             
-            warning('Warning: Wrong CRC: %s (is: %02x, should be: %02x)' % (repr(payload[:-2]), unpack('<H', payload[-2:])[0], self.ccitt_crc16(payload[:-2])))
+            debug('Ignoring (partial?) frame: Wrong CRC: %s (is: %02x, should be: %02x)' % (
+                    repr(payload[:-2]),
+                    unpack('<H', payload[-2:])[0],
+                    self.ccitt_crc16(payload[:-2])))
         
         payload = payload[:-2]
         
