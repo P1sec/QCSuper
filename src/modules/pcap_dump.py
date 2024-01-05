@@ -83,7 +83,7 @@ class PcapDumper(DecodedSibsDumper):
         
         if platform in ('win32', 'cygwin'):
             
-            DST_WIRESHARK_PLUGIN_DIR = expandvars('%APPDATA%\Wireshark\plugins')
+            DST_WIRESHARK_PLUGIN_DIR = expandvars('%APPDATA%\\Wireshark\\plugins')
         
         else:
             
@@ -516,8 +516,8 @@ class WiresharkLive(PcapDumper):
     def __init__(self, diag_input, reassemble_sibs, decrypt_nas, include_ip_traffic):
         
         wireshark = (
-            which('C:\Program Files\Wireshark\Wireshark.exe') or
-            which('C:\Program Files (x86)\Wireshark\Wireshark.exe') or
+            which('C:\\Program Files\\Wireshark\\Wireshark.exe') or
+            which('C:\\Program Files (x86)\\Wireshark\\Wireshark.exe') or
             which('wireshark') or
             which('wireshark-gtk')
         )
