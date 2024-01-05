@@ -84,7 +84,7 @@ class FileOrHexStringType(FileType):
     
     def __call__(self, path):
         
-        hex_string = sub('\s', '', path)
+        hex_string = sub(r'\s', '', path)
         
         is_valid_hex = len(hex_string) % 2 == 0 and match('[a-fA-F0-9]', hex_string)
         

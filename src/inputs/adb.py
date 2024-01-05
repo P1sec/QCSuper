@@ -366,7 +366,7 @@ class AdbConnector(HdlcMixin, BaseInput):
         gps_info = run_safe([self.adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', 'dumpsys', 'location'], stdout = PIPE)
         gps_info = gps_info.stdout.decode('utf8')
         
-        gps_info = search('(\d+\.\d+),(\d+\.\d+)', gps_info)
+        gps_info = search(r'(\d+\.\d+),(\d+\.\d+)', gps_info)
         if gps_info:
             lat, lng = map(float, gps_info.groups())
         

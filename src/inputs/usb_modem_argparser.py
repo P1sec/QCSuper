@@ -13,11 +13,11 @@ class UsbModemArgType(IntEnum):
     pyusb_auto = 6
 
 USB_ARG_REGEX_TO_MODE = {
-    'COM\d+|/dev.+': UsbModemArgType.pyserial_dev,
-    '([0-9a-f]{4}):([0-9a-f]{4})': UsbModemArgType.pyusb_vid_pid,
-    '([0-9a-f]{4}):([0-9a-f]{4}):(\d+):(\d+)': UsbModemArgType.pyusb_vid_pid_cfg_intf,
-    '([0-9]{3}):([0-9]{3})': UsbModemArgType.pyusb_bus_device,
-    '([0-9]{3}):([0-9]{3}):(\d+):(\d+)': UsbModemArgType.pyusb_bus_device_cfg_intf,
+    r'COM\d+|/dev.+': UsbModemArgType.pyserial_dev,
+    r'([0-9a-f]{4}):([0-9a-f]{4})': UsbModemArgType.pyusb_vid_pid,
+    r'([0-9a-f]{4}):([0-9a-f]{4}):(\d+):(\d+)': UsbModemArgType.pyusb_vid_pid_cfg_intf,
+    r'([0-9]{3}):([0-9]{3})': UsbModemArgType.pyusb_bus_device,
+    r'([0-9]{3}):([0-9]{3}):(\d+):(\d+)': UsbModemArgType.pyusb_bus_device_cfg_intf,
     'auto': UsbModemArgType.pyusb_auto
 }
 

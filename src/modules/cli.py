@@ -176,8 +176,8 @@ class CommandLineInterface:
         
         print(
             '\nCommand format: module_name [ARGUMENT] [--option [ARGUMENT]]\n\n' +
-            help_modules_prefix + sub('--', '', help_modules) +
-            help_options_prefix + sub('--([\w-]+-dump)', r'"\1"', help_options)
+            help_modules_prefix + sub(r'--', '', help_modules) +
+            help_options_prefix + sub(r'--([\w-]+-dump)', r'"\1"', help_options)
         )
     
     def on_deinit(self):
