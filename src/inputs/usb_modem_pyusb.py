@@ -73,7 +73,8 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
                 
                 except Exception:
 
-                    info('Connection from the mode closed: ' + format_exc())
+                    info('Connection from the USB link closed')
+                    debug('Reason for closing the link: ' + format_exc())
                     exit()
                 
                 raw_payload += data_read
