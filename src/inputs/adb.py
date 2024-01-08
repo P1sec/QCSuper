@@ -195,16 +195,18 @@ class AdbConnector(HdlcMixin, BaseInput):
                 self.usb_modem : Optional[PyusbDevInterface] = self._check_for_usb_diag_interface()
                 if self.usb_modem:
                     return
+                
+                for i in range(3):
 
-                sleep(4)
+                    sleep(4)
 
-                self.usb_modem : Optional[PyusbDevInterface] = self._check_for_usb_diag_interface()
-                if self.usb_modem:
-                    return
+                    self.usb_modem : Optional[PyusbDevInterface] = self._check_for_usb_diag_interface()
+                    if self.usb_modem:
+                        return
 
-                self.usb_modem = PyusbDevInterface.auto_find()
-                if not self.usb_modem.not_found_reason:
-                    return
+                    self.usb_modem = PyusbDevInterface.auto_find()
+                    if not self.usb_modem.not_found_reason:
+                        return
             
             error('Could not automatically mode-switch your device to enable ' +
                 'Diag-over-USB. Please read the QCSuper README for more background over this.')
