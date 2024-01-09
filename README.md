@@ -45,11 +45,11 @@ It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) 
 
 ## Installation
 
-QCSuper was tested and developed on Ubuntu LTS 16.04 - 22.04 and Windows 7+. It depends on a few Python modules. It is advised to use Linux for better compatibility.
+QCSuper was lately tested and developed on Ubuntu LTS 22.04 and also has been used over Windows 11. It depends on a few Python modules. It is advised to use Linux for better compatibility.
 
 To use it, your phone must be rooted or expose a diag service port over USB. In order to check for compatibility with your phone, look up the phone's model on a site like [GSMArena](https://www.gsmarena.com/) and check whether it has a Qualcomm processor.
 
-In order to open PCAP files produced by QCSuper, you can use any Wireshark 2.x for 2G/3G frames, but you need at least Wireshark 2.5.x for 4G frames (and 2.6.x for individual NAS messages decrypted out of 4G frames). Ubuntu currently provides a recent enough build for all versions.
+In order to open PCAP files produced by QCSuper, you can use any Wireshark 2.x - 4.x for 2G/3G frames, but you need at least Wireshark 2.5.x for 4G frames (and 2.6.x for individual NAS messages decrypted out of 4G frames). Ubuntu currently provides a recent enough build for all versions.
 
 Decoding 5G frames was tested under Wireshark 3.6.x and will be done through automatically installing a Wireshark Lua plug-in (in `%APPDATA%\Wireshark\plugins` under Windows or in `~/.local/lib/wireshark/plugins` under Linux and macOS), which can be avoided through setting the `DONT_INSTALL_WIRESHARK_PLUGIN=1` environment variable if you are willing to avoid this.
 
@@ -69,17 +69,18 @@ sudo pip3 install --upgrade pyserial pyusb crcmod https://github.com/P1sec/pycra
 
 ### Windows installation
 
-QCSuper can run on Windows, but you should beforehand ensure that Google's ADB prompt correctly runs on your machine with your device, and you should as well manually create `libusb-win32` filters (through the utility accessible in the Start Menu after installing it) in the case where your device directly needs to connect to the Diag port over pseudo-serial USB. (Please note that if you mode-switch your device, the associated USB PID/VID may change and it may require to redo driver associations both in the Windows peripherial devices managers and in the `libusb-win32` filter creation utility)
+QCSuper can run on Windows, but you should beforehand ensure that Google's ADB prompt correctly runs on your machine with your device, and you should as well manually create `libusb-win32` filters (through the utility accessible in the Start Menu after installing it) in the case where your device directly needs to connect to the Diag port over pseudo-serial USB. (Please note that if you mode-switch your device, the associated USB PID/VID may change and it may require to redo driver associations in the `libusb-win32` filter creation utility - and/or in the Windows peripherial devices managers depending on the case)
 
 On Windows, you may need (in addition to Google's ADB kernel drivers) to download and install your phone's USB drivers from your phone model. Please search for your phone's model + "USB driver" or "ADB driver" on Google for instructions.
 
 Then, you need to ensure that you can reach your device using `adb`. You can find a tutorial on how to download and setup `adb` [here](https://www.xda-developers.com/install-adb-windows-macos-linux/). The `adb.exe shell` (or whatever executable path you use, a copy of the ADB executable is present in the `src/inputs/external/adb` folder of QCSuper) command must display a prompt to continue.
 
-Then, follow these links on order to:
+Then, follow these links (the tool has been tested lately on Windows 11 - it is not guaranteed to work on Windows 7) in order to:
 
-* [Install Python 3.7](https://www.python.org/ftp/python/3.7.9/python-3.7.9.exe) or more recent (be sure to check options to include it into PATH, install it for all users and install pip)
-* [Install Wireshark 3.6](https://2.na.dl.wireshark.org/win64/all-versions/Wireshark-win64-3.6.19.exe) or more recent
-* [Install libusb-win32 1.2.3.7](https://github.com/mcuee/libusb-win32/releases/download/snapshot_1.2.7.3/libusb-win32-devel-filter-1.2.7.3.exe) or more recent (this is the last supported version on Windows 7)
+* [Install Python 3.12](https://www.python.org/ftp/python/3.12.1/python-3.12.1-amd64.exe) (Windows 7 version: [Python 3.7](https://www.python.org/ftp/python/3.7.9/python-3.7.9.exe)) or more recent (be sure to check options to include it into PATH, install it for all users and install pip)
+* [Install Wireshark 4.2](https://2.na.dl.wireshark.org/win64/Wireshark-4.2.2-x64.exe) (Windows 7 version: [Install Wireshark 3.6](https://2.na.dl.wireshark.org/win64/all-versions/Wireshark-win64-3.6.19.exe)) or more recent
+* [Install libusb-win32 1.2.7.3](https://github.com/mcuee/libusb-win32/releases/download/snapshot_1.2.7.3/libusb-win32-devel-filter-1.2.7.3.exe) (Windows 7 version: [libusb-win32 1.2.3.7](https://github.com/mcuee/libusb-win32/releases/download/snapshot_1.2.7.3/libusb-win32-devel-filter-1.2.7.3.exe)) or more recent
+* Restart your command prompt/terminal in order to ensure that the `%PATH%` system variable has been updated.
 * [Download and extract QCSuper](https://github.com/P1sec/QCSuper/archive/master.zip)
 
 To install the required Python modules, open your command prompt and type:
@@ -89,6 +90,8 @@ pip3 install --upgrade pyserial pyusb crcmod https://github.com/P1sec/pycrate/ar
 ```
 
 Still in your command prompt, move to the directory containing QCSuper using the `cd` command. You can then execute commands (which should start with `py qcsuper.py` or `py3 qcsuper.py` if you installed Python 3 from the online installer, or `python3.exe .\qcsuper.py` if you installed it from the Windows Store).
+
+As noted above, it is possible that you should add a `libusb-win32` filter through the utility available in the Start Menu after a first failed attempt to run the tool using the `--adb` mode.
 
 ## Supported protocols
 
