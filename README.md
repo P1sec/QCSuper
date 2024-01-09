@@ -85,10 +85,10 @@ Then, follow these links on order to:
 To install the required Python modules, open your command prompt and type:
 
 ```bash
-python3.exe -m pip install --upgrade pyserial pyusb crcmod https://github.com/P1sec/pycrate/archive/master.zip https://github.com/pyocd/libusb-package/archive/master.zip
+pip3 install --upgrade pyserial pyusb crcmod https://github.com/P1sec/pycrate/archive/master.zip https://github.com/pyocd/libusb-package/archive/master.zip
 ```
 
-Still in your command prompt, move to the directory containing QCSuper using the `cd` command. You can then execute commands (which should start with `py .\qcsuper.py`).
+Still in your command prompt, move to the directory containing QCSuper using the `cd` command. You can then execute commands (which should start with `py qcsuper.py` or `py3 qcsuper.py` if you installed Python 3 from the online installer, or `python3.exe .\qcsuper.py` if you installed it from the Windows Store).
 
 ## Supported protocols
 
