@@ -503,7 +503,8 @@ class PcapDumper(DecodedSibsDumper):
     
     def __del__(self):
         
-        self.pcap_file.close()
+        if getattr(self, 'pcap_file', None):
+            self.pcap_file.close()
 
 
 """
