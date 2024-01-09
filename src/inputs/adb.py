@@ -106,6 +106,11 @@ class AdbConnector(HdlcMixin, BaseInput):
         self.usb_modem : Optional[PyusbDevInterface] = self._check_for_usb_diag_interface()
         if self.usb_modem:
             return
+
+        if platform in ('cygwin', 'win32'):
+            self.usb_modem = PyusbDevInterface.auto_find()
+            if not self.usb_modem.not_found_reason:
+                return
         
         # Send batch commands to check for the writability of /dev/diag through
         # adb, and for the availability of the "su" command
@@ -183,7 +188,7 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             # Mode-switch the device
 
-            for command in ['setprop sys.usb.config diag,adb', 'setprop sys.usb.config diag,diag_mdm,adb']:
+            for command in ['setprop sys.usb.config diag,adb']: # , 'setprop sys.usb.config diag,diag_mdm,adb'
 
                 adb = run_safe([self.adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % command],
                     
@@ -195,7 +200,12 @@ class AdbConnector(HdlcMixin, BaseInput):
                 self.usb_modem : Optional[PyusbDevInterface] = self._check_for_usb_diag_interface()
                 if self.usb_modem:
                     return
-                
+
+                if platform in ('cygwin', 'win32'):
+                    self.usb_modem = PyusbDevInterface.auto_find()
+                    if not self.usb_modem.not_found_reason:
+                        return
+
                 for i in range(3):
 
                     sleep(4)
@@ -210,6 +220,9 @@ class AdbConnector(HdlcMixin, BaseInput):
             
             error('Could not automatically mode-switch your device to enable ' +
                 'Diag-over-USB. Please read the QCSuper README for more background over this.')
+            if platform in ('cygwin', 'win32'):
+                error('As you are on Windows, you may need to add a libusb-win32 filter ' +
+                      'using the utility accessible through the Start Menu now.')
             exit()
             
         else:
