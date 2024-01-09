@@ -35,7 +35,7 @@ QCSuper makes use of different threads:
 
 * The main thread contains the loop reading from the device, and is the only place where reading is performed (it will also dispatch asynchronous messages to modules, calling the `on_log`, `on_message` callbacks which may not write neither read, and calling at teardown the `on_deinit` callback which may write)
 * A background thread is used for initializing the modules selected through command line arguments (calling the `on_init` callback which may write)
-* A background thread may be used for the optional interactive prompt (`--cli`) and initializing the modules called from it (calling the `on_init` callback which may write)
+* Edge case only: a background thread may be used for the optional interactive prompt (`--cli`) and initializing the modules called from it (calling the `on_init` callback which may write)
 
 ### Modules API
 
