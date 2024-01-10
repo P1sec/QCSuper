@@ -1,6 +1,6 @@
 # Willing to get introduced to the source code? :)
 
-Just read the [QCSuper architecture.md](../docs/QCSuper%20architecture.md) document to get a quick glimpse about it.
+Just read the [QCSuper architecture.md](../../docs/QCSuper%20architecture.md) document to get a quick glimpse about it.
 
 This directory contains "inputs", Python classes providing a source from which we can communicate using the Diag protocol - either a live device (e.g a smartphone or an USB modem), or a dump file.
 

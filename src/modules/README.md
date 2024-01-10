@@ -1,6 +1,6 @@
 # Willing to get introduced to the source code? :)
 
-Just read the [QCSuper architecture.md](../docs/QCSuper%20architecture.md) document to get a quick glimpse about it.
+Just read the [QCSuper architecture.md](../../docs/QCSuper%20architecture.md) document to get a quick glimpse about it.
 
 This directory contains "modules", Python classes dedicaded to performing specific tasks using the Diag protocol.
 
