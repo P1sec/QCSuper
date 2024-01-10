@@ -93,7 +93,7 @@ Still in your command prompt, move to the directory containing QCSuper using the
 
 As noted above, it is possible that you have to add a `libusb-win32` filter through the utility available in the Start Menu in order to ensure that the interface corresponding to the Diag port is visible by QCSuper on the mode-switched device (a first failed attempt to run the tool using the `--adb` flag should trigger a mode-switch if the ADB driver is working and the device is correctly rooted).
 
-![Screenshot of adding a libusb-win32 filter for the Diag port of a Mi phone](docs/Adding%20libusb-win32%20filter.png?raw=true)
+-> ![Screenshot of adding a libusb-win32 filter for the Diag port of a Mi phone](docs/Adding%20libusb-win32%20filter.png?raw=true) <-
 
 ## Supported protocols
 
