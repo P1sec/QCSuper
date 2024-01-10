@@ -71,7 +71,7 @@ sudo pip3 install --upgrade pyserial pyusb crcmod https://github.com/P1sec/pycra
 
 QCSuper can run on Windows, but you should beforehand ensure that Google's ADB prompt correctly runs on your machine with your device, and you should as well manually create `libusb-win32` filters (through the utility accessible in the Start Menu after installing it) in the case where your device directly needs to connect to the Diag port over pseudo-serial USB. (Please note that if you mode-switch your device, the associated USB PID/VID may change and it may require to redo driver associations in the `libusb-win32` filter creation utility - and/or in the Windows peripherial devices managers depending on the case)
 
-On Windows, you may need (in addition to Google's ADB kernel drivers) to download and install your phone's USB drivers from your phone model. Please search for your phone's model + "USB driver" or "ADB driver" on Google for instructions.
+On Windows, you may need (in addition to Google's ADB kernel drivers) to download and install your phone's USB drivers from your phone model (this may include generic Qualcomm USB drivers). Please search for your phone's model + "USB driver" or "ADB driver" on Google for instructions.
 
 Then, you need to ensure that you can reach your device using `adb`. You can find a tutorial on how to download and setup `adb` [here](https://www.xda-developers.com/install-adb-windows-macos-linux/). The `adb.exe shell` (or whatever executable path you use, a copy of the ADB executable is present in the `src/inputs/external/adb` folder of QCSuper) command must display a prompt to continue.
 
@@ -91,7 +91,9 @@ pip3 install --upgrade pyserial pyusb crcmod https://github.com/P1sec/pycrate/ar
 
 Still in your command prompt, move to the directory containing QCSuper using the `cd` command. You can then execute commands (which should start with `py qcsuper.py` or `py3 qcsuper.py` if you installed Python 3 from the online installer, or `python3.exe .\qcsuper.py` if you installed it from the Windows Store).
 
-As noted above, it is possible that you should add a `libusb-win32` filter through the utility available in the Start Menu after a first failed attempt to run the tool using the `--adb` mode.
+As noted above, it is possible that you have to add a `libusb-win32` filter through the utility available in the Start Menu in order to ensure that the interface corresponding to the Diag port is visible by QCSuper on the mode-switched device (a first failed attempt to run the tool using the `--adb` flag should trigger a mode-switch if the ADB driver is working and the device is correctly rooted).
+
+![Screenshot of adding a libusb-win32 filter for the Diag port of a Mi phone](docs/Adding%20libusb-win32%20filter.png?raw=true)
 
 ## Supported protocols
 
