@@ -69,7 +69,7 @@ sudo pip3 install --upgrade pyserial pyusb crcmod https://github.com/P1sec/pycra
 
 ### Windows installation
 
-QCSuper can run on Windows, but you should beforehand ensure that Google's ADB prompt correctly runs on your machine with your device, and you should as well manually create `libusb-win32` filters (through the utility accessible in the Start Menu after installing it) in the case where your device directly needs to connect to the Diag port over pseudo-serial USB. (Please note that if you mode-switch your device, the associated USB PID/VID may change and it may require to redo driver associations in the `libusb-win32` filter creation utility - and/or in the Windows peripherial devices managers depending on the case)
+QCSuper can run on Windows, but you should beforehand ensure that Google's ADB prompt correctly runs on your machine with your device, and you should as well manually create `libusb-win32` filters (through the utility accessible in the Start Menu after installing it) in the case where your device directly needs to connect to the Diag port over pseudo-serial USB. (Please note that if you mode-switch your device, the associated USB PID/VID may change and it may require to redo driver associations in the `libusb-win32` filter creation utility - and/or in the Windows peripherial devices manager depending on the case)
 
 On Windows, you may need (in addition to Google's ADB kernel drivers) to download and install your phone's USB drivers from your phone model (this may include generic Qualcomm USB drivers). Please search for your phone's model + "USB driver" or "ADB driver" on Google for instructions.
 
