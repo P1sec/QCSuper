@@ -4,7 +4,7 @@ Just read the [QCSuper architecture.md](../../docs/QCSuper%20architecture.md) do
 
 This directory contains "modules", Python classes dedicaded to performing specific tasks using the Diag protocol.
 
-Modules are included from the entry point, [`qcsuper.py`](../qcsuper.py) and called depending on the command line flags passed by the end user.
+Modules are included from the entry point, [`qcsuper.py`](../../qcsuper.py) and called depending on the command line flags passed by the end user.
 
 A simple template for a module could be:
 
