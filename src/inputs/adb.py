@@ -278,7 +278,7 @@ class AdbConnector(HdlcMixin, BaseInput):
         self.adb_proc = Popen([self.adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % (ANDROID_TMP_DIR + '/adb_bridge')],
             
             stdin = DEVNULL, stdout = PIPE, stderr = STDOUT,
-            preexec_fn = lambda: partial(drop_privileges, True) if drop_privileges else None,
+            preexec_fn = (lambda: partial(drop_privileges, True)) if drop_privileges else None,
             bufsize = 0, universal_newlines = True
         )
     
