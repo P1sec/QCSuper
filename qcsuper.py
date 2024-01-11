@@ -93,7 +93,7 @@ elif args.adb_wsl2:
         error("--adb-wsl2 is not a valid path to Windows adb executable")
         exit()
     diag_input = AdbWsl2Connector(f'{win_adb_path}')
-    if diag_input.usb_modem:
+    if diag_input.usb_modem and not diag_input.usb_modem.not_found_reason:
         usb_modem : PyusbDevInterface = diag_input.usb_modem
         if usb_modem.chardev_if_mounted:
             diag_input = UsbModemPyserialConnector(usb_modem.chardev_if_mounted)
@@ -101,7 +101,7 @@ elif args.adb_wsl2:
             diag_input = UsbModemPyusbConnector(usb_modem)
 elif args.adb:
     diag_input = AdbConnector()
-    if diag_input.usb_modem:
+    if diag_input.usb_modem and not diag_input.usb_modem.not_found_reason:
         usb_modem : PyusbDevInterface = diag_input.usb_modem
         if usb_modem.chardev_if_mounted:
             diag_input = UsbModemPyserialConnector(usb_modem.chardev_if_mounted)
