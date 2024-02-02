@@ -11,7 +11,7 @@ A simple template for a module could be:
 ```python
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
-from src.protocol.messages import *
+from ..protocol.messages import *
 
 class MyExampleModule:
     

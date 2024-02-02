@@ -6,7 +6,7 @@ from json import loads
 from time import time
 import gzip
 
-from src.inputs._base_input import BaseInput
+from ._base_input import BaseInput
 
 """
     This class implements reading JSON files produced with the json_geo_dump.py

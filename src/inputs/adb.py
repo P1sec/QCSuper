@@ -20,9 +20,9 @@ try:
 except Exception:
     IS_UNIX = False
 
-from src.inputs.usb_modem_pyusb_devfinder import PyusbDevInterface
-from src.inputs._hdlc_mixin import HdlcMixin
-from src.inputs._base_input import BaseInput
+from .usb_modem_pyusb_devfinder import PyusbDevInterface
+from ._hdlc_mixin import HdlcMixin
+from ._base_input import BaseInput
 
 INPUTS_DIR = dirname(realpath(__file__))
 ADB_BRIDGE_DIR = realpath(INPUTS_DIR + '/adb_bridge')

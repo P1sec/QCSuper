@@ -21,9 +21,9 @@ try:
 except ImportError:
     pass
 
-from src.inputs._hdlc_mixin import HdlcMixin
-from src.inputs._base_input import BaseInput
-from src.protocol.messages import *
+from ._hdlc_mixin import HdlcMixin
+from ._base_input import BaseInput
+from ..protocol.messages import *
 
 """
     This class implements reading Qualcomm DIAG data from an USB modem

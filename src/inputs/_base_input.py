@@ -10,8 +10,8 @@ from subprocess import run
 from shutil import which
 from struct import pack
 
-from src.modules.cli import CommandLineInterface
-from src.protocol.messages import *
+from ..modules.cli import CommandLineInterface
+from ..protocol.messages import *
 
 LOG_CONFIG_DISABLE_OP = 0
 
@@ -473,10 +473,10 @@ class BaseInput:
     def __del__(self):
         self.dispose(disposing=False)
 
-import src.protocol.messages
+from ..protocol import messages
 
 message_id_to_name = {
     value: key
-    for key, value in src.protocol.messages.__dict__.items()
+    for key, value in messages.__dict__.items()
     if key.startswith('DIAG_')
 }

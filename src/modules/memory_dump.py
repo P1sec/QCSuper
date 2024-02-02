@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
 from struct import pack, unpack_from, calcsize
-from src.protocol.messages import *
+from ..protocol.messages import *
 from datetime import datetime
 from struct import unpack
 from enum import IntEnum

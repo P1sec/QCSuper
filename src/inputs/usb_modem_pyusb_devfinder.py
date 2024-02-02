@@ -8,7 +8,7 @@ from os import listdir, scandir, readlink
 from enum import IntEnum
 from glob import glob
 
-from src.inputs.usb_modem_argparser import UsbModemArgParser, UsbModemArgType
+from .usb_modem_argparser import UsbModemArgParser, UsbModemArgType
 
 """
     This class contains a collection of methods that will

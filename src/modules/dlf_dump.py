@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
-from src.modules._enable_log_mixin import EnableLogMixin
-from src.protocol.gsmtap import build_gsmtap_ip
-from src.protocol.log_types import *
+from ..modules._enable_log_mixin import EnableLogMixin
+from ..protocol.gsmtap import build_gsmtap_ip
+from ..protocol.log_types import *
 from struct import pack, unpack
 
 """

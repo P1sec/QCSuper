@@ -6,7 +6,7 @@ from logging import warning
 from crcmod import mkCrcFun
 from time import time
 
-from src.protocol.messages import *
+from ..protocol.messages import *
 
 """
     This class implements the pseudo-HDLC framing using for the Qualcomm Diag
@@ -99,11 +99,11 @@ class HdlcMixin:
         
         pass
     
-import src.protocol.messages
+from ..protocol import messages
 
 message_id_to_name = {
     value: key
-    for key, value in src.protocol.messages.__dict__.items()
+    for key, value in messages.__dict__.items()
     if key.startswith('DIAG_')
 }
 

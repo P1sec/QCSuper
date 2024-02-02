@@ -9,10 +9,10 @@ from subprocess import run
 from shutil import which
 from shlex import split
 
-from src.inputs._base_input import BaseInput
-from src.protocol.subsystems import *
-from src.protocol.messages import *
-from src.protocol.efs2 import *
+from ..inputs._base_input import BaseInput
+from ..protocol.subsystems import *
+from ..protocol.messages import *
+from ..protocol.efs2 import *
 
 from .efs_shell_commands._base_efs_shell_command import BaseEfsShellCommand
 from .efs_shell_commands.device_info import DeviceInfoCommand

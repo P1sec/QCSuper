@@ -4,7 +4,7 @@ from datetime import datetime
 from struct import unpack
 import gzip
 
-from src.inputs._base_input import BaseInput
+from ._base_input import BaseInput
 
 """
     This class implements reading Qualcomm DIAG data from a DLF file.

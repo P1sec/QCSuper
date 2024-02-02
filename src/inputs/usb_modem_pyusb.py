@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
 
-from src.inputs.usb_modem_pyusb_devfinder import PyusbDevInterface
+from .usb_modem_pyusb_devfinder import PyusbDevInterface
 from logging import error, warning, info, debug
-from src.inputs._hdlc_mixin import HdlcMixin
-from src.inputs._base_input import BaseInput
+from ._hdlc_mixin import HdlcMixin
+from ._base_input import BaseInput
 
 from usb.util import dispose_resources
 from traceback import format_exc

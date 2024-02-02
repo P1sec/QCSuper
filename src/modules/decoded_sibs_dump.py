@@ -3,7 +3,7 @@
 from pycrate_core.utils import pack_val, TYPE_UINT
 from collections import defaultdict, namedtuple
 from pycrate_asn1dir import RRC3G
-from src.protocol.log_types import *
+from ..protocol.log_types import *
 from traceback import format_exc
 from struct import pack, unpack
 from logging import warning
@@ -11,7 +11,7 @@ from time import time
 
 RRC3G.ASN1Obj._SILENT = True
 
-from src.modules._enable_log_mixin import EnableLogMixin, TYPES_FOR_RAW_PACKET_LOGGING
+from ..modules._enable_log_mixin import EnableLogMixin, TYPES_FOR_RAW_PACKET_LOGGING
 
 """
     This module decodes SIBs from 3G RRC frames, independantly of the input

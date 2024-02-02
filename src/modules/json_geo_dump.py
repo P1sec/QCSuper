@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
-from src.protocol.gsmtap import build_gsmtap_ip
-from src.protocol.log_types import *
+from ..protocol.gsmtap import build_gsmtap_ip
+from ..protocol.log_types import *
 from struct import pack, unpack
 from base64 import b64encode
 from subprocess import run
 from json import dumps
 from time import time
 
-from src.modules._enable_log_mixin import EnableLogMixin, TYPES_FOR_RAW_PACKET_LOGGING
+from ._enable_log_mixin import EnableLogMixin, TYPES_FOR_RAW_PACKET_LOGGING
 
 """
     This module registers various diag LOG events, and generates a JSON file

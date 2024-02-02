@@ -7,10 +7,10 @@ from typing import List, Dict, Optional
 from datetime import datetime
 
 from ._base_efs_shell_command import BaseEfsShellCommand
-from src.inputs._base_input import message_id_to_name
-from src.protocol.subsystems import *
-from src.protocol.messages import *
-from src.protocol.efs2 import *
+from ...inputs._base_input import message_id_to_name
+from ...protocol.subsystems import *
+from ...protocol.messages import *
+from ...protocol.efs2 import *
 from os import strerror
 
 class StatCommand(BaseEfsShellCommand):

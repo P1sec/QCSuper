@@ -11,7 +11,7 @@ A simple template for implementing a new input could be:
 ```python
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
-from src.inputs._base_input import BaseInput
+from .inputs._base_input import BaseInput
 
 class MyExampleInput(BaseInput):
     

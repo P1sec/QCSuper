@@ -2,8 +2,8 @@
 #-*- encoding: Utf-8 -*-
 from struct import pack, unpack_from, calcsize
 from logging import warning, info
-from src.protocol.log_types import *
-from src.protocol.messages import *
+from ..protocol.log_types import *
+from ..protocol.messages import *
 from time import sleep
 
 """

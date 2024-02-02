@@ -10,8 +10,8 @@ from logging import warning
 from sys import platform
 import gzip
 
-from src.modules._enable_log_mixin import EnableLogMixin, TYPES_FOR_RAW_PACKET_LOGGING
-from src.modules.decoded_sibs_dump import DecodedSibsDumper
+from ..modules._enable_log_mixin import EnableLogMixin, TYPES_FOR_RAW_PACKET_LOGGING
+from ..modules.decoded_sibs_dump import DecodedSibsDumper
 
 MODULES_DIR = realpath(dirname(__file__))
 SRC_WIRESHARK_PLUGIN_DIR = realpath(MODULES_DIR + '/wireshark_plugin')
@@ -25,8 +25,8 @@ try:
 except Exception:
     IS_UNIX = False
 
-from src.protocol.log_types import *
-from src.protocol.gsmtap import *
+from ..protocol.log_types import *
+from ..protocol.gsmtap import *
 
 """
     This module registers various diag LOG events, and tries to generate a

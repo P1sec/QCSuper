@@ -6,7 +6,7 @@ from logging import warning, info
 from time import sleep
 from ctypes import *
 
-from src.protocol.messages import *
+from ..protocol.messages import *
 
 """
     This module exposes a class from which a module may inherit in order to
