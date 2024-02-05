@@ -273,7 +273,8 @@ class AdbConnector(HdlcMixin, BaseInput):
             'chmod 755 ' + ANDROID_TMP_DIR + '/adb_bridge'
         )
         
-        run_safe([self.adb_exe, 'forward', 'tcp:' + str(QCSUPER_TCP_PORT), 'tcp:' + str(QCSUPER_TCP_PORT)], check = True, stdin = DEVNULL)
+        run_safe([self.adb_exe, 'forward', 'tcp:' + str(QCSUPER_TCP_PORT), 'tcp:' + str(QCSUPER_TCP_PORT)], check = True,
+                stdout = DEVNULL, stdin = DEVNULL)
         
         self.adb_proc = Popen([self.adb_exe, 'exec-out' if self.can_use_exec_out else 'shell', self.su_command % (ANDROID_TMP_DIR + '/adb_bridge')],
             
