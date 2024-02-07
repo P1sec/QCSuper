@@ -1,4 +1,6 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
 
-import src.__main__
+from src.main import main
+
+main()

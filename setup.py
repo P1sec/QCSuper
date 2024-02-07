@@ -18,7 +18,7 @@ setup(name = 'qcsuper',
     long_description_content_type = 'text/markdown',
     entry_points = {
         'console_scripts': [
-            'qcsuper = qcsuper.__main__'
+            'qcsuper = qcsuper.main:main'
         ]
     },
     url = 'https://github.com/P1sec/QCSuper',
