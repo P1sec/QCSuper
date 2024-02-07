@@ -27,21 +27,32 @@ function diag_nr_rrc_protocol.dissector(buffer, packet, tree)
     
     local subtree = tree:add(diag_nr_rrc_protocol, buffer(0, 24))
 
+    local raw_packet_version = buffer(0, 1):le_uint()
+    local tentative_packet_len = buffer(22, 2):le_uint()
+    local extra_off
+    if raw_packet_version >= 14 or (
+            raw_packet_version > 7 and
+            buffer:len() ~= 24 + tentative_packet_len) then
+        extra_off = 0
+    else
+        extra_off = 1
+    end
+
     subtree:add_le(diag_nr_rrc_fields.packet_version, buffer(0, 1))
     subtree:add_le(diag_nr_rrc_fields.unknown1, buffer(1, 3))
     subtree:add_le(diag_nr_rrc_fields.rrc_release_number, buffer(4, 1))
     subtree:add_le(diag_nr_rrc_fields.rrc_version_number, buffer(5, 1))
     subtree:add_le(diag_nr_rrc_fields.radio_bearer_id, buffer(6, 1))
     subtree:add_le(diag_nr_rrc_fields.physical_cell_id, buffer(7, 2))
-    subtree:add_le(diag_nr_rrc_fields.frequency, buffer(9, 4))
-    subtree:add_le(diag_nr_rrc_fields.sysframenum_subframenum, buffer(13, 4))
-    local pdu_number_subtree = subtree:add_le(diag_nr_rrc_fields.pdu_number, buffer(17, 1))
-    subtree:add_le(diag_nr_rrc_fields.sib_mask_in_si, buffer(18, 1))
-    subtree:add_le(diag_nr_rrc_fields.unknown2, buffer(19, 3))
-    subtree:add_le(diag_nr_rrc_fields.msg_length, buffer(22, 2))
+    subtree:add_le(diag_nr_rrc_fields.frequency, buffer(9, 3 + extra_off))
+    subtree:add_le(diag_nr_rrc_fields.sysframenum_subframenum, buffer(12 + extra_off, 4))
+    local pdu_number_subtree = subtree:add_le(diag_nr_rrc_fields.pdu_number, buffer(16 + extra_off, 1))
+    subtree:add_le(diag_nr_rrc_fields.sib_mask_in_si, buffer(17 + extra_off, 1))
+    subtree:add_le(diag_nr_rrc_fields.unknown2, buffer(18 + extra_off, 3))
+    subtree:add_le(diag_nr_rrc_fields.msg_length, buffer(21 + extra_off, 2))
     
-    local raw_pdu_type = buffer(17, 1):le_uint()
-    local raw_msg_length = buffer(22, 2):le_uint()
+    local raw_pdu_type = buffer(16 + extra_off, 1):le_uint()
+    local raw_msg_length = buffer(21 + extra_off, 2):le_uint()
     
     local NR_RRC_LOG_TYPES = {
         [0x01] = 'BCCH/BCH',
@@ -78,9 +89,9 @@ function diag_nr_rrc_protocol.dissector(buffer, packet, tree)
     end
     
     if NR_RRC_LOG_TYPES[raw_pdu_type] and raw_msg_length > 1 then
-        Dissector.get(NR_RRC_LOG_DISSECTORS[raw_pdu_type]):call(buffer(24):tvb(), packet, tree)
+        Dissector.get(NR_RRC_LOG_DISSECTORS[raw_pdu_type]):call(buffer(23 + extra_off):tvb(), packet, tree)
     else
-        Dissector.get('data'):call(buffer(24):tvb(), packet, tree)
+        Dissector.get('data'):call(buffer(23 + extra_off):tvb(), packet, tree)
     end
 end
 
