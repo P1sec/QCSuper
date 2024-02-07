@@ -55,7 +55,19 @@ Decoding 5G frames was tested under Wireshark 3.6.x and will be done through aut
 
 ### Ubuntu and Debian installation
 
-Open a terminal and type the following:
+In order to install the stable version of QCSuper system-wide from PyPI, you can run these commands:
+
+```bash
+# Install dependencies
+sudo apt install python3-pip wireshark
+
+# Install stable QCSuper system-wide
+sudo pip3 install --upgrade qcsuper
+```
+
+Then, you can just type `qcsuper` in your terminal to run QCSuper. (Use this anywhere in place of where `./qcsuper.py` is written below.)
+
+In order to install the development version in a specific folder, open a terminal and type the following:
 
 ```bash
 # Download QCSuper
@@ -66,6 +78,8 @@ cd qcsuper
 sudo apt install python3-pip wireshark
 sudo pip3 install --upgrade pyserial pyusb crcmod https://github.com/P1sec/pycrate/archive/master.zip
 ```
+
+Then, run QCSuper from the `qcsuper/` directory, using the `./qcsuper.py` command in the terminal.
 
 ### Windows installation
 
