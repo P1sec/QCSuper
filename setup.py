@@ -10,7 +10,7 @@ with open(README_PATH) as fd:
     long_description = fd.read()
 
 setup(name = 'qcsuper',
-    version = '2.0.0-1',
+    version = '2.0.1',
     description = ' QCSuper is a tool communicating with Qualcomm-based phones and modems, allowing to capture raw 2G/3G/4G radio frames, among other things',
     author = 'P1 Security - Marin Moulinier',
     author_email = '',
