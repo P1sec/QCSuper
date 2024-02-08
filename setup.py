@@ -24,9 +24,23 @@ setup(name = 'qcsuper',
     url = 'https://github.com/P1sec/QCSuper',
     requires = ['pyserial(>=3.5)', 'pyusb(>=1.2.1)', 'crcmod(>=1.7)', 'pycrate(>=0.7.0)'],
     install_requires = [],
+    include_package_data = True,
+    package_data = {
+        'qcsuper.inputs.adb_bridge': ['*'],
+        'qcsuper.inputs.adb_wsl2_bridge': ['*'],
+        'qcsuper.inputs.external': ['*'],
+        'qcsuper.inputs.external.adb': ['*'],
+        'qcsuper.inputs.external.adb.lib64': ['*'],
+        'qcsuper.inputs.adb_bridge': ['*']
+    },
     packages = [
         'qcsuper',
         'qcsuper.inputs',
+        'qcsuper.inputs.adb_bridge',
+        'qcsuper.inputs.adb_wsl2_bridge',
+        'qcsuper.inputs.external',
+        'qcsuper.inputs.external.adb',
+        'qcsuper.inputs.external.adb.lib64',
         'qcsuper.protocol',
         'qcsuper.modules',
         'qcsuper.modules.efs_shell_commands'
