@@ -23,7 +23,7 @@ USB_ARG_REGEX_TO_MODE = {
 
 class UsbModemArgParser:
 
-    arg_type : UsbModemArgType
+    arg_type : UsbModemArgType = None
 
     pyserial_device : Optional[str] = None
 
