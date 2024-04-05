@@ -79,6 +79,13 @@ function diag_nr_rrc_protocol.dissector(buffer, packet, tree)
         [0x08] = 'nr-rrc.ul.dcch',
         [0x09] = 'nr-rrc.rrc_reconf_msg',
         [0x0a] = 'nr-rrc.ul.dcch',
+
+        --  nr-rrc.dedicatedNAS_Message ?
+        --     =>  Decoding code references: nas_5gs_handle = find_dissector("nas-5gs");
+        -- nr-rrc.nas_Container ?
+        --     => n1-to-s1 (NSA-to-SA) NAS container
+        --     => Decoding code references: de_nas_5gs_s1_mode_to_n1_mode_nas_transparent_cont(nas_5gs_tvb
+        
         [0x18] = 'nr-rrc.radiobearerconfig',
         [0x19] = 'nr-rrc.radiobearerconfig',
         [0x1a] = 'nr-rrc.radiobearerconfig',

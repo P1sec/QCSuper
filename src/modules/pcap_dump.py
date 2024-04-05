@@ -400,6 +400,19 @@ class PcapDumper(DecodedSibsDumper):
             self.current_rat = '5g'
         
             packet = build_nr_rrc_log_ip(log_payload)
+        
+        elif log_type in (
+            LOG_NR_NAS_5GSM_PLAIN_OTA_IN_MSG_LOG_C,
+            LOG_NR_NAS_5GSM_PLAIN_OTA_OUT_MSG_LOG_C,
+            LOG_NR_NAS_5GSM_SEC_OTA_IN_MSG_LOG_C,
+            LOG_NR_NAS_5GSM_SEC_OTA_OUT_MSG_LOG_C,
+            LOG_NR_NAS_5GMM_PLAIN_OTA_IN_MSG_LOG_C,
+            LOG_NR_NAS_5GMM_PLAIN_OTA_OUT_MSG_LOG_C,
+            LOG_NR_NAS_5GMM_PLAIN_OTA_CONTAINER_MSG_LOG_C
+        ):
+            self.current_rat = '5g'
+        
+            packet = build_nr_nas_log_ip(log_payload)
             
         if packet:
             

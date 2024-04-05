@@ -8,6 +8,7 @@ from struct import pack, unpack
 
 GSMTAP_PORT = 4729
 NR_RRC_UDP_PORT = 47928
+NR_NAS_UDP_PORT = 47929 # WIP <--
 
 def build_gsmtap_ip(gsmtap_protocol, gsmtap_channel_type, payload, is_uplink):
     
@@ -68,6 +69,33 @@ def build_nr_rrc_log_ip(log_payload : bytes):
         0,0,0,0, # From 0.0.0.0
         0,0,0,0, # To 0.0.0.0
     ) + packet
+
+def build_nr_nas_log_ip(log_payload : bytes):
+
+    # UDP:
+
+    packet = pack('>HHHH',
+        NR_NAS_UDP_PORT, # From custom QCSuper plug-in UDP port
+        NR_NAS_UDP_PORT, # To custom QCSuper plug-in UDP port
+        len(log_payload) + 8, # Total length
+        0 # Ignore checksum
+    ) + log_payload
+    
+    # IP:
+    
+    return pack('>BBHHHBBH8B',
+        (4 << 4) | 5, # IPv4 version and header words
+        0, # DSCP
+        len(packet) + 20, # Total length
+        0, # Identification
+        0, # Fragment offset
+        64, # Time to live
+        17, # Protocol: UDP
+        0, # Ignore checksum
+        0,0,0,0, # From 0.0.0.0
+        0,0,0,0, # To 0.0.0.0
+    ) + packet
+
 
 
 
