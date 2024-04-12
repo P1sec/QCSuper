@@ -59,11 +59,12 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
 
     def read_loop(self):
         
+        read_buffer = b''
+
         while True:
                 
             # Read more bytes until a trailer character is found
 
-            read_buffer = b''
             read_size = self.dev_intf.read_endpoint.wMaxPacketSize or 0x200
             
             while self.TRAILER_CHAR not in read_buffer:
