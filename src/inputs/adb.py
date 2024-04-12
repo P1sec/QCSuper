@@ -439,9 +439,7 @@ class AdbConnector(HdlcMixin, BaseInput):
                 try:
                 
                     unframed_message = self.hdlc_decapsulate(
-                        payload = raw_payload + self.TRAILER_CHAR,
-                        
-                        raise_on_invalid_frame = not self.received_first_packet
+                        payload = raw_payload + self.TRAILER_CHAR
                     )
                 
                 except self.InvalidFrameError:

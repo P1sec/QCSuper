@@ -255,9 +255,7 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
             try:
             
                 unframed_message = self.hdlc_decapsulate(
-                    payload = raw_payload,
-                    
-                    raise_on_invalid_frame = not self.received_first_packet
+                    payload = raw_payload
                 )
             
             except self.InvalidFrameError:
