@@ -2,7 +2,6 @@
 #-*- encoding: utf-8 -*-
 from struct import pack, unpack, unpack_from, calcsize
 from logging import debug, info, warning, error
-from logging import warning
 from crcmod import mkCrcFun
 from time import time
 
@@ -51,23 +50,20 @@ class HdlcMixin:
         Utility function to decode the reverse way
         
         :param payload: An encapsulated payload to be made raw
-        :param raise_on_invalid_frame: Whether to signal to the caller through
+        :raises InvalidFrameError: Used to signal to the caller through
             an Exception that a packet that is too short or with an invalid
-            CRC-16 was received, rather than just printing a warning
+            CRC-16 was received, along with a warning
     """
 
-    def hdlc_decapsulate(self, payload, raise_on_invalid_frame = False) -> bytes:
+    def hdlc_decapsulate(self, payload) -> bytes:
         
         # Check the message length
         
         if len(payload) < 3:
             
-            if raise_on_invalid_frame:
-                raise self.InvalidFrameError
-            
             error('Too short Diag frame received')
             
-            exit()
+            raise self.InvalidFrameError
         
         # Remove the trailer
         
@@ -83,14 +79,13 @@ class HdlcMixin:
         
         if payload[-2:] != pack('<H', self.ccitt_crc16(payload[:-2])):
             
-            if raise_on_invalid_frame:
-                raise self.InvalidFrameError
-            
-            debug('Ignoring (partial?) frame: Wrong CRC: %s (is: %02x, should be: %02x)' % (
+            warning('Ignoring (partial?) frame: Wrong CRC: %s (is: %02x, should be: %02x)' % (
                     repr(payload[:-2]),
                     unpack('<H', payload[-2:])[0],
                     self.ccitt_crc16(payload[:-2])))
-        
+            
+            raise self.InvalidFrameError
+
         payload = payload[:-2]
         
         return payload

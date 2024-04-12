@@ -63,12 +63,13 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
                 
             # Read more bytes until a trailer character is found
 
-            raw_payload = b''
+            read_buffer = b''
+            read_size = self.dev_intf.read_endpoint.wMaxPacketSize or 0x200
             
-            while not raw_payload.endswith(self.TRAILER_CHAR):
+            while self.TRAILER_CHAR not in read_buffer:
                 
                 try:
-                    data_read = bytes(self.dev_intf.read_endpoint.read(0x1000, timeout = 0x7fffffff))
+                    data_read = bytes(self.dev_intf.read_endpoint.read(read_size, timeout = 0x7fffffff))
                     assert data_read
                 
                 except Exception:
@@ -77,32 +78,38 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
                     debug('Reason for closing the link: ' + format_exc())
                     exit()
                 
-                raw_payload += data_read
+                read_buffer += data_read
             
             # Decapsulate and dispatch
             
-            if raw_payload == self.TRAILER_CHAR:
-                error('The modem seems to be unavailable.')
+            while self.TRAILER_CHAR in read_buffer:
+
+                end_pos = read_buffer.index(self.TRAILER_CHAR) + 1
+                raw_payload = read_buffer[:end_pos]
+                read_buffer = read_buffer[end_pos:]
+
+                if raw_payload == self.TRAILER_CHAR:
+                    warning('(Received an empty diag frame)')
+                elif len(raw_payload) < 3:
+                    warning('(Received a too short diag frame)')
                 
-                exit()
-            
-            try:
-            
-                unframed_message = self.hdlc_decapsulate(
-                    payload = raw_payload,
+                else:
                     
-                    raise_on_invalid_frame = not self.received_first_packet
-                )
-            
-            except self.InvalidFrameError:
-                
-                # The first packet that we receive over the Diag input may
-                # be partial
-                
-                continue
-            
-            finally:
-                
-                self.received_first_packet = True
-            
-            self.dispatch_received_diag_packet(unframed_message)
+                    try:
+                    
+                        unframed_message = self.hdlc_decapsulate(
+                            payload = raw_payload
+                        )
+                    
+                    except self.InvalidFrameError:
+                        
+                        # The first packet that we receive over the Diag input may
+                        # be partial
+                        
+                        continue
+                    
+                    finally:
+                        
+                        self.received_first_packet = True
+                    
+                    self.dispatch_received_diag_packet(unframed_message)
