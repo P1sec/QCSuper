@@ -429,6 +429,8 @@ class AdbConnector(HdlcMixin, BaseInput):
                 self.packet_buffer += socket_read
             
             while self.TRAILER_CHAR in self.packet_buffer:
+
+                # TODO: Add better auto-reconnect?
                 
                 # Parse frame
                 
