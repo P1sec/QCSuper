@@ -10,6 +10,7 @@ from usb.util import dispose_resources
 from traceback import format_exc
 from usb.core import USBError
 from typing import Optional
+from time import sleep
 
 class UsbModemPyusbConnector(HdlcMixin, BaseInput):
 
@@ -61,6 +62,8 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
         
         read_buffer = b''
 
+        num_reconnect_retries = 0
+
         while True:
                 
             # Read more bytes until a trailer character is found
@@ -77,7 +80,17 @@ class UsbModemPyusbConnector(HdlcMixin, BaseInput):
 
                     info('Connection from the USB link closed')
                     debug('Reason for closing the link: ' + format_exc())
-                    exit()
+
+                    # Retry loop.
+
+                    if num_reconnect_retries >= 3:
+                        error('Connection to the USB link lost despite retries')
+                        exit()
+                    sleep(2)
+                    num_reconnect_retries += 1
+
+                else:
+                    num_reconnect_retries = 0
                 
                 read_buffer += data_read
             
