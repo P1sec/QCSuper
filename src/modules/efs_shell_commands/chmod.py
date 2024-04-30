@@ -15,7 +15,13 @@ from ...protocol.messages import *
 from ...protocol.efs2 import *
 
 class ChmodCommand(BaseEfsShellCommand):
-    
+    #Add new parameter efs_type to the initialization method
+    def __init__(self, efs_type=None):
+        # Save efs_type for use by other methods of the class
+        self.efs_type = efs_type
+        # Call the parent class's initialization method, if necessary
+        super().__init__(fs_type=efs_type)
+
     def get_argument_parser(self, subparsers_object : _SubParsersAction) -> ArgumentParser:
         
         argument_parser = subparsers_object.add_parser('chmod',
@@ -34,7 +40,13 @@ class ChmodCommand(BaseEfsShellCommand):
         return argument_parser
         
     def execute_command(self, diag_input, args : Namespace):
-    
+        if self.fs_type == 'efs':
+            subsys_code = DIAG_SUBSYS_FS  # Assuming DIAG_SUBSYS_FS is the code for primary
+        elif self.fs_type == 'efs2':
+            subsys_code = DIAG_SUBSYS_FS_ALTERNATE
+        else:
+            raise ValueError("Invalid filesystem type specified.")
+        
         try:
             assert int(args.octal_perms, 8) & ~0o777 == 0
         except Exception:
@@ -47,7 +59,7 @@ class ChmodCommand(BaseEfsShellCommand):
         is_directory : bool = False
         
         opcode, payload = diag_input.send_recv(DIAG_SUBSYS_CMD_F, pack('<BH',
-            DIAG_SUBSYS_FS, # Command subsystem number
+            subsys_code, # Command subsystem number
             EFS2_DIAG_STAT,
         ) + args.file_path.encode('latin1').decode('unicode_escape').encode('latin1') + b'\x00', accept_error = True)
         
@@ -106,7 +118,7 @@ class ChmodCommand(BaseEfsShellCommand):
         # Then, actually open the file for write and/or creation
         
         opcode, payload = diag_input.send_recv(DIAG_SUBSYS_CMD_F, pack('<BHH',
-            DIAG_SUBSYS_FS, # Command subsystem number
+            subsys_code, # Command subsystem number
             EFS2_DIAG_CHMOD,
             file_mode
         ) + args.file_path.encode('latin1').decode('unicode_escape').encode('latin1') + b'\x00', accept_error = True)

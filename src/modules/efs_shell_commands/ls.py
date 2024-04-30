@@ -14,7 +14,13 @@ from ...protocol.efs2 import *
 from os import strerror
 
 class LsCommand(BaseEfsShellCommand):
-    
+    #Add new parameter efs_type to the initialization method
+    def __init__(self, efs_type=None):
+        # Save efs_type for use by other methods of the class
+        self.efs_type = efs_type
+        # Call the parent class's initialization method, if necessary
+        super().__init__(fs_type=efs_type)
+
     def get_argument_parser(self, subparsers_object : _SubParsersAction) -> ArgumentParser:
         
         argument_parser = subparsers_object.add_parser('ls',
@@ -26,9 +32,15 @@ class LsCommand(BaseEfsShellCommand):
         return argument_parser
         
     def execute_command(self, diag_input, args : Namespace):
-        
+        #print("LsCommand", self.fs_type)
+        if self.fs_type == 'efs':
+            subsys_code = DIAG_SUBSYS_FS  # Assuming DIAG_SUBSYS_FS is the code for primary
+        elif self.fs_type == 'efs2':
+            subsys_code = DIAG_SUBSYS_FS_ALTERNATE
+        else:
+            raise ValueError("Invalid filesystem type specified.")
         opcode, payload = diag_input.send_recv(DIAG_SUBSYS_CMD_F, pack('<BH',
-            DIAG_SUBSYS_FS, # Command subsystem number
+            subsys_code, # Command subsystem number
             EFS2_DIAG_OPENDIR
         ) + args.path.encode('latin1').decode('unicode_escape').encode('latin1') + b'\x00', accept_error = True)
         
@@ -53,7 +65,7 @@ class LsCommand(BaseEfsShellCommand):
             while True: # Iterate over directory files
             
                 opcode, payload = diag_input.send_recv(DIAG_SUBSYS_CMD_F, pack('<BHIi',
-                    DIAG_SUBSYS_FS, # Command subsystem number,
+                    subsys_code, # Command subsystem number,
                     EFS2_DIAG_READDIR,
                     dir_fd, sequence_number), accept_error = False)
                     
@@ -92,7 +104,7 @@ class LsCommand(BaseEfsShellCommand):
                 if mode & 0o170000 == 0o120000: # S_IFLNK
 
                     opcode, payload = diag_input.send_recv(DIAG_SUBSYS_CMD_F, pack('<BH',
-                        DIAG_SUBSYS_FS, # Command subsystem number,
+                        subsys_code, # Command subsystem number,
                         EFS2_DIAG_READLINK) + entry_path.rstrip(b'\x00') + b'\x00', accept_error = False)
                         
                     readlink_struct = '<BHI'
@@ -146,7 +158,7 @@ class LsCommand(BaseEfsShellCommand):
         finally:
             
             opcode, payload = diag_input.send_recv(DIAG_SUBSYS_CMD_F, pack('<BHi',
-                DIAG_SUBSYS_FS, # Command subsystem number
+                subsys_code, # Command subsystem number
                 EFS2_DIAG_CLOSEDIR,
                 dir_fd
             ))
