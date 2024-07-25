@@ -14,7 +14,12 @@ from ...protocol.efs2 import *
 from os import strerror
 
 class StatCommand(BaseEfsShellCommand):
-    
+    #Add new parameter efs_type to the initialization method
+    def __init__(self, efs_type=None):
+        # Save efs_type for use by other methods of the class
+        self.efs_type = efs_type
+        # Call the parent class's initialization method, if necessary
+        super().__init__(fs_type=efs_type)
     def get_argument_parser(self, subparsers_object : _SubParsersAction) -> ArgumentParser:
         
         argument_parser = subparsers_object.add_parser('stat',
@@ -26,11 +31,16 @@ class StatCommand(BaseEfsShellCommand):
         return argument_parser
         
     def execute_command(self, diag_input, args : Namespace):
-
+        if self.fs_type == 'efs':
+            subsys_code = DIAG_SUBSYS_FS  # Assuming DIAG_SUBSYS_FS is the code for primary
+        elif self.fs_type == 'efs2':
+            subsys_code = DIAG_SUBSYS_FS_ALTERNATE
+        else:
+            raise ValueError("Invalid filesystem type specified.")
         encoded_path : bytes = args.path.encode('latin1').decode('unicode_escape').encode('latin1') + b'\x00'
 
         opcode, payload = diag_input.send_recv(DIAG_SUBSYS_CMD_F, pack('<BH',
-            DIAG_SUBSYS_FS, # Command subsystem number,
+            subsys_code, # Command subsystem number,
             EFS2_DIAG_STAT) + encoded_path, accept_error = True)
             
         readdir_struct = '<BHI8i'
@@ -68,7 +78,7 @@ class StatCommand(BaseEfsShellCommand):
         if mode & 0o170000 == 0o120000: # S_IFLNK
 
             opcode, payload = diag_input.send_recv(DIAG_SUBSYS_CMD_F, pack('<BH',
-                DIAG_SUBSYS_FS, # Command subsystem number,
+                subsys_code, # Command subsystem number,
                 EFS2_DIAG_READLINK) + encoded_path, accept_error = False)
                 
             readlink_struct = '<BHI'
