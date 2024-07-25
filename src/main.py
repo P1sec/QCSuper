@@ -23,6 +23,7 @@ from .inputs.usb_modem_argparser import UsbModemArgParser, UsbModemArgType
 from .inputs.dlf_read import DlfReader
 from .inputs.adb import AdbConnector
 from .inputs.adb_wsl2 import AdbWsl2Connector
+from .inputs.tcp_connector import TcpConnector
 
 def main():
 
@@ -41,6 +42,7 @@ def main():
 
     input_mode.add_argument('--adb', action = 'store_true', help = 'Use a rooted Android phone with USB debugging enabled as input (requires adb).')
     input_mode.add_argument('--adb-wsl2', action = 'store', default=None, help = 'Unix path to the Windows adb executable. Equivalent of --adb command but with WSL2/Windows interoperability.')
+    input_mode.add_argument('--tcp', action = 'store', metavar = 'IP_ADDRESS:TCP_PORT', help = 'Connect to remote TCP service exposing DIAG interface.')
     input_mode.add_argument('--usb-modem', metavar = 'TTY_DEV', help = 'Use an USB modem exposing a DIAG pseudo-serial port through USB.\n' +
         'Possible syntaxes:\n' +
         '  - "auto": Use the first device interface in the system found where the\n' +
@@ -110,6 +112,8 @@ def main():
                 diag_input = UsbModemPyserialConnector(usb_modem.chardev_if_mounted)
             else:
                 diag_input = UsbModemPyusbConnector(usb_modem)
+    elif args.tcp:
+        diag_input = TcpConnector(args.tcp)
     elif args.usb_modem:
         usb_arg = UsbModemArgParser(args.usb_modem)
         if not usb_arg.arg_type:

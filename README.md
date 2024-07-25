@@ -186,7 +186,7 @@ $ sudo ./qcsuper.py --usb-modem /dev/ttyHS2 --wireshark-live
 Here is the current usage notice for QCSuper:
 
 ```
-usage: qcsuper.py [-h] [--cli] [--efs-shell] [-v] (--adb | --adb-wsl2 ADB_WSL2 | --usb-modem TTY_DEV | --dlf-read DLF_FILE | --json-geo-read JSON_FILE) [--info]
+usage: qcsuper.py [-h] [--cli] [--efs-shell] [-v] (--adb | --adb-wsl2 ADB_WSL2 | --tcp IP_ADDRESS:TCP_PORT --usb-modem TTY_DEV | --dlf-read DLF_FILE | --json-geo-read JSON_FILE) [--info]
                   [--pcap-dump PCAP_FILE] [--wireshark-live] [--memory-dump OUTPUT_DIR] [--dlf-dump DLF_FILE] [--json-geo-dump JSON_FILE] [--decoded-sibs-dump]
                   [--reassemble-sibs] [--decrypt-nas] [--include-ip-traffic] [--start MEMORY_START] [--stop MEMORY_STOP]
 
@@ -203,6 +203,8 @@ Input mode:
 
   --adb                 Use a rooted Android phone with USB debugging enabled as input (requires adb).
   --adb-wsl2 ADB_WSL2   Unix path to the Windows adb executable. Equivalent of --adb command but with WSL2/Windows interoperability.
+  --tcp IP_ADDRESS:TCP_PORT
+                        Connect to remote TCP service exposing DIAG interface.
   --usb-modem TTY_DEV   Use an USB modem exposing a DIAG pseudo-serial port through USB.
                         Possible syntaxes:
                           - "auto": Use the first device interface in the system found where the
@@ -376,6 +378,7 @@ Please note that only one client may communicate with the Diag port at the same 
 
 If ModemManager is active on your system, QCSuper will attempt to dynamically add an udev rule to prevent it to access the Diag port and restart its daemon, as it's currently the best way to achieve this. It will suppress this rule when closed.
 
+
 ## Supported devices
 
 QCSuper was successfully tested with:
@@ -391,6 +394,8 @@ QCSuper was successfully tested with:
 * OnePlus One and 3 (Phones)
 * Andromax A16C3H (Phone)
 * Samsung Galaxy S4 GT-I9505 (Phone)
+* Virtual Access GW1150 - using TCP connection
+* Westermo Merlin 4600 - using TCP connection
 
 Is it however aiming to be compatible with the widest possible range of devices based on a Qualcomm chipset, for the capture part.
 
