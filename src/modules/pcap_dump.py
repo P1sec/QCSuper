@@ -9,6 +9,7 @@ from shutil import copy2, which
 from logging import warning
 from sys import platform
 import gzip
+import os
 
 from ..modules._enable_log_mixin import EnableLogMixin, TYPES_FOR_RAW_PACKET_LOGGING
 from ..modules.decoded_sibs_dump import DecodedSibsDumper
@@ -506,68 +507,88 @@ class PcapDumper(DecodedSibsDumper):
         if getattr(self, 'pcap_file', None):
             self.pcap_file.close()
 
+class ExternalAnalysis(PcapDumper):
+    def __init__(self, diag_input, reassemble_sibs, decrypt_nas, include_ip_traffic):
+        tshark = which('tshark')
+        if not tshark:
+            raise Exception('Could not find Tshark in $PATH')
 
-"""
-    This is the same module, except that il will launch directly a FIFO to
-    Wireshark rather than write the PCAP to a file
-"""
+        pipe_path = '/tmp/tshark_pipe'
+        if not os.path.exists(pipe_path):
+            os.mkfifo(pipe_path)
+
+        tshark_pipe = Popen([tshark, '-i', '-'], stdin=PIPE, stdout=open(pipe_path, 'w'))
+        tshark_pipe.stdin.appending_to_file = False
+
+        super().__init__(diag_input, tshark_pipe.stdin, reassemble_sibs, decrypt_nas, include_ip_traffic)
+
+    def __del__(self):
+        self.tshark_pipe.stdin.close()
+        self.tshark_pipe.wait()
+
+class TsharkLive(PcapDumper):
+    def __init__(self, diag_input, reassemble_sibs, decrypt_nas, include_ip_traffic):
+        tshark = which('tshark')
+        if not tshark:
+            raise Exception('Could not find Tshark in $PATH')
+
+        tshark_pipe = Popen([tshark, '-i', '-'], stdin=PIPE)
+        tshark_pipe.stdin.appending_to_file = False
+
+        super().__init__(diag_input, tshark_pipe.stdin, reassemble_sibs, decrypt_nas, include_ip_traffic)
+
+    def __del__(self):
+        self.tshark_pipe.stdin.close()
+        self.tshark_pipe.wait()
 
 class WiresharkLive(PcapDumper):
-
     def __init__(self, diag_input, reassemble_sibs, decrypt_nas, include_ip_traffic):
-        
+
         wireshark = (
             which('C:\\Program Files\\Wireshark\\Wireshark.exe') or
             which('C:\\Program Files (x86)\\Wireshark\\Wireshark.exe') or
             which('wireshark') or
             which('wireshark-gtk')
         )
-        
+
         if not wireshark:
-            
+
             raise Exception('Could not find Wireshark in $PATH')
-        
+
         if not IS_UNIX:
-            
+
             self.detach_process = None
-        
+
         wireshark_pipe = Popen([wireshark, '-k', '-i', '-'],
             stdin = PIPE, stdout = DEVNULL, stderr = STDOUT,
             preexec_fn = self.detach_process,
             bufsize = 0
         ).stdin
-        
+
         wireshark_pipe.appending_to_file = False
-        
+
         super().__init__(diag_input, wireshark_pipe, reassemble_sibs, decrypt_nas, include_ip_traffic)
-    
+
     """
         Executed when we launch a Wireshark process, after fork()
     """
-    
     def detach_process(self):
-        
+
         try:
-            
+
             # Don't be hit by CTRL+C
-            
             setpgrp()
-            
+
             # Drop privileges if needed
-            
             uid, gid = getenv('SUDO_UID'), getenv('SUDO_GID')
-            
+
             if uid and gid:
-                
+
                 uid, gid = int(uid), int(gid)
-
                 setgroups(getgrouplist(getpwuid(uid).pw_name, gid))
-
                 setresgid(gid, gid, -1)
-                
                 setresuid(uid, uid, -1)
-        
+
         except Exception:
-            
             print_exc()
 

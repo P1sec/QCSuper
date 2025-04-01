@@ -65,6 +65,8 @@ def main():
 
     modules.add_argument('--info', action = 'store_true', help = 'Read generic information about the baseband device.')
     modules.add_argument('--pcap-dump', metavar = 'PCAP_FILE', type = FileType('ab'), help = 'Generate a PCAP file containing GSMTAP frames for 2G/3G/4G, to be loaded using Wireshark.')
+    modules.add_argument('--tshark', action = 'store_true', help = 'Same as --pcap-dump, but directly spawn tshark.')
+    modules.add_argument('--analysis', action = 'store_true', help = 'Same as --pcap-dump, but send the output to a named pipe.')
     modules.add_argument('--wireshark-live', action = 'store_true', help = 'Same as --pcap-dump, but directly spawn a Wireshark instance.')
     # modules.add_argument('--efs-dump', metavar = 'OUTPUT_DIR', help = 'Dump the internal EFS filesystem of the device.')
     modules.add_argument('--memory-dump', metavar = 'OUTPUT_DIR', help = 'Dump the memory of the device (may not or partially work with recent devices).')
@@ -73,7 +75,7 @@ def main():
         'To be used in combination with --adb.')
     modules.add_argument('--decoded-sibs-dump', action = 'store_true', help = 'Print decoded SIBs to stdout (experimental, requires pycrate).')
 
-    pcap_options = parser.add_argument_group(title = 'PCAP generation options', description = 'To be used along with --pcap-dump or --wireshark-live.')
+    pcap_options = parser.add_argument_group(title = 'PCAP generation options', description = 'To be used along with --pcap-dump, --wireshark-live, --tshark or --analysis.')
 
     pcap_options.add_argument('--reassemble-sibs', action = 'store_true', help = 'Include reassembled UMTS SIBs as supplementary frames, also embedded fragmented in RRC frames.')
     pcap_options.add_argument('--decrypt-nas', action = 'store_true', help = 'Include unencrypted LTE NAS as supplementary frames, also embedded ciphered in RRC frames.')
@@ -154,6 +156,12 @@ def main():
         if args.wireshark_live:
             from .modules.pcap_dump import WiresharkLive
             diag_input.add_module(WiresharkLive(diag_input, args.reassemble_sibs, args.decrypt_nas, args.include_ip_traffic))
+        if args.analysis and not args.tshark:
+            from .modules.pcap_dump import ExternalAnalysis
+            diag_input.add_module(ExternalAnalysis(diag_input, args.reassemble_sibs, args.decrypt_nas, args.include_ip_traffic))
+        if args.tshark and not args.analysis:
+            from .modules.pcap_dump import TsharkLive
+            diag_input.add_module(TsharkLive(diag_input, args.reassemble_sibs, args.decrypt_nas, args.include_ip_traffic))
         if args.json_geo_dump:
             diag_input.add_module(JsonGeoDumper(diag_input, args.json_geo_dump))
         if args.decoded_sibs_dump:
