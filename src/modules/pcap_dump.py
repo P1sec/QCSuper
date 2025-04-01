@@ -507,7 +507,7 @@ class PcapDumper(DecodedSibsDumper):
         if getattr(self, 'pcap_file', None):
             self.pcap_file.close()
 
-class ExternalAnalysis(PcapDumper):
+class ExternalAnalyze(PcapDumper):
     def __init__(self, diag_input, reassemble_sibs, decrypt_nas, include_ip_traffic):
         tshark = which('tshark')
         if not tshark:
