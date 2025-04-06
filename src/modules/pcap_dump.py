@@ -9,14 +9,13 @@ from shutil import copy2, which
 from logging import warning
 from sys import platform
 import gzip
+import sys
 import os
-
 from ..modules._enable_log_mixin import EnableLogMixin, TYPES_FOR_RAW_PACKET_LOGGING
 from ..modules.decoded_sibs_dump import DecodedSibsDumper
 
 MODULES_DIR = realpath(dirname(__file__))
 SRC_WIRESHARK_PLUGIN_DIR = realpath(MODULES_DIR + '/wireshark_plugin')
-
 
 try:
     from os import setpgrp, getenv, setresgid, setresuid, setgroups, getgrouplist
@@ -38,17 +37,17 @@ from ..protocol.gsmtap import *
 """
 
 class PcapDumper(DecodedSibsDumper):
-    
+
     def __init__(self, diag_input, pcap_file, reassemble_sibs, decrypt_nas, include_ip_traffic):
-        
+
         self.pcap_file = pcap_file
-        
+
         """
             Write a PCAP file header - https://wiki.wireshark.org/Development/LibpcapFileFormat#File_Format
         """
-        
+
         if not self.pcap_file.appending_to_file:
-            
+
             self.pcap_file.write(pack('<IHHi4xII',
                 0xa1b2c3d4, # PCAP Magic
                 2, 4, # Version
@@ -56,22 +55,22 @@ class PcapDumper(DecodedSibsDumper):
                 65535, # Max packet length
                 228 # LINKTYPE_IPV4 (for GSMTAP)
             ))
-        
+
         self.diag_input = diag_input
-        
+
         self.limit_registered_logs = TYPES_FOR_RAW_PACKET_LOGGING
-        
+
         self.current_rat = None # Radio access technology: "2g", "3g", "4g", "5g"
-        
+
         self.reassemble_sibs = reassemble_sibs
         self.decrypt_nas = decrypt_nas
         self.include_ip_traffic = include_ip_traffic
-        
+
         # Install the QCSuper Lua Wireshark plug-in, except if the
         # corresponding environment variable is set.
-        
+
         self.install_wireshark_plugin()
-    
+
     def install_wireshark_plugin(self): # WIP
         
         # See: https://www.wireshark.org/docs/wsug_html_chunked/ChPluginFolders.html
@@ -507,24 +506,22 @@ class PcapDumper(DecodedSibsDumper):
         if getattr(self, 'pcap_file', None):
             self.pcap_file.close()
 
+class StdoutWrapper:
+    def __init__(self, stream):
+        self.stream = stream.buffer
+        self.appending_to_file = False
+
+    def write(self, data):
+        self.stream.write(data)
+        self.stream.flush()
+
+    def close(self):
+        pass
+
 class ExternalAnalyze(PcapDumper):
     def __init__(self, diag_input, reassemble_sibs, decrypt_nas, include_ip_traffic):
-        tshark = which('tshark')
-        if not tshark:
-            raise Exception('Could not find Tshark in $PATH')
-
-        pipe_path = '/tmp/tshark_pipe'
-        if not os.path.exists(pipe_path):
-            os.mkfifo(pipe_path)
-
-        tshark_pipe = Popen([tshark, '-i', '-'], stdin=PIPE, stdout=open(pipe_path, 'w'))
-        tshark_pipe.stdin.appending_to_file = False
-
-        super().__init__(diag_input, tshark_pipe.stdin, reassemble_sibs, decrypt_nas, include_ip_traffic)
-
-    def __del__(self):
-        self.tshark_pipe.stdin.close()
-        self.tshark_pipe.wait()
+        stdout_wrapper = StdoutWrapper(sys.stdout)
+        super().__init__(diag_input, stdout_wrapper, reassemble_sibs, decrypt_nas, include_ip_traffic)
 
 class TsharkLive(PcapDumper):
     def __init__(self, diag_input, reassemble_sibs, decrypt_nas, include_ip_traffic):
