@@ -579,7 +579,7 @@ enable_logging (int diag_fd, int mode)
 
     long arglen = probe_ioctl_arglen(DIAG_IOCTL_SWITCH_LOGGING, sizeof(struct diag_logging_mode_param_t_q));
 
-    // IAN: fixed bug that checked for system_version and added support for Android 14. This change is in my FORKED repo
+    // Added support for Android 14 since it uses the same DIAG_IOCTL_SWITCH_LOGGING structure as Android 11
     if (strstr(board_name, "lito") != NULL && strstr(system_version, "11") != NULL || strstr(system_version, "14") != NULL){
         // printf("MATCHED.\n");
         /* Android 11.0.0 (RD1A.201105.003.C1)
