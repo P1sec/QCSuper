@@ -13,6 +13,7 @@ from .modules.memory_dump import MemoryDumper
 from .modules.cli import CommandLineInterface
 from .modules.dlf_dump import DlfDumper
 from .modules.info import InfoRetriever
+from .modules.messages_live import MessagePrinter
 from .modules._utils import FileType
 
 from .inputs.json_geo_read import JsonGeoReader
@@ -159,6 +160,11 @@ def main():
         action='store_true',
         help='Print decoded SIBs to stdout (experimental, requires pycrate).',
     )
+    modules.add_argument(
+        '--messages-live',
+        action='store_true',
+        help='Print modem log messages to stdout.',
+    )
 
     pcap_options = parser.add_argument_group(
         title='PCAP generation options',
@@ -198,6 +204,20 @@ def main():
         default='ffffffff',
         help='Offset at which to stop to dump memory (hex number), by default ffffffff.',
     )
+
+    messages_options = parser.add_argument_group(
+        title='Modem log options',
+        description='To be used along with --messages-live.',
+    )
+
+    messages_options.add_argument(
+        '--qdb',
+        metavar='QSHRINK_DB',
+        type=FileType('rb'),
+        action='append',
+        help='Optional QShrink database of terse message strings. If specified multiple times, later files take precedence.',
+    )
+    # TODO: subsystem argument?
 
     args = parser.parse_args()
 
@@ -319,6 +339,8 @@ def main():
             diag_input.add_module(InfoRetriever(diag_input))
         if args.dlf_dump:
             diag_input.add_module(DlfDumper(diag_input, args.dlf_dump))
+        if args.messages_live:
+            diag_input.add_module(MessagePrinter(diag_input, args.qdb or []))
 
     # if args.efs_dump:
     #     raise NotImplementedError
