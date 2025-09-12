@@ -73,6 +73,9 @@ class MessagePrinter:
 
         hdr, data = MsgHeader._parse_start(payload)
 
+        if hdr.drop_cnt > 0:
+            warning(f"Dropped {hdr.drop_cnt} log message(s); consider adding filters")
+
         if opcode == DIAG_EXT_MSG_F:
             meta, rest = NormalMeta._parse_start(data)
             args, rest = args_at_start(rest, 4, hdr.num_args)
