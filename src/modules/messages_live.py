@@ -1,8 +1,12 @@
 #!/usr/bin/python3
 #-*- encoding: Utf-8 -*-
 from collections import namedtuple
-from logging import warning
+import io
+from logging import warning, debug
+import re
 from struct import Struct, pack # TODO: Clean up?
+import uuid
+import zlib
 
 from ..inputs._base_input import message_id_to_name, MSG_EXT_SUBCMD_SET_ALL_RT_MASKS
 
@@ -27,6 +31,12 @@ class MsgHeader(ParseableStruct, namedtuple('MsgHeader', ['ts_type', 'num_args',
 
 class NormalMeta(ParseableStruct, namedtuple('NormalMeta', ['line', 'ssid', 'ss_mask'])):
     STRUCT = Struct('<HHI')
+
+class TerseMeta(ParseableStruct, namedtuple('TerseMeta', ['line', 'ssid', 'ss_mask', 'hash'])):
+    STRUCT = Struct('<HHII')
+
+class Qsr4TerseMeta(ParseableStruct, namedtuple('Qsr4TerseMeta', ['hash', 'magic'])):
+    STRUCT = Struct('<IH')
 
 
 def args_at_start(data, arg_size, num_args):
@@ -53,6 +63,10 @@ class MessagePrinter:
     def __init__(self, diag_input, qshrink_fds):
 
         self.diag_input = diag_input
+
+        self.qdb = QdbFile()
+        for fd in qshrink_fds:
+            self.qdb.parse(fd)
 
 
     def on_init(self):
@@ -82,6 +96,27 @@ class MessagePrinter:
             string, file, _ = rest.split(b'\x00')
 
             self.log_message(meta.ssid, meta.ss_mask, meta.line, file, string, args)
+        elif opcode == DIAG_QSR_EXT_MSG_TERSE_F:
+            meta, rest = TerseMeta._parse_start(data)
+            args, rest = args_at_start(rest, 4, hdr.num_args)
+
+            h = self.qdb.messages.get(meta.hash)
+            if h is not None:
+                self.log_message(meta.ssid, meta.ss_mask, meta.line, h.file, h.string, args)
+            else:
+                warning(f'Unmapped terse message (try --qdb): {meta.hash}{self.debug_args(args)}')
+        elif opcode == DIAG_QSR4_EXT_MSG_TERSE_F:
+            meta, rest = Qsr4TerseMeta._parse_start(data)
+
+            arg_size = (hdr.num_args >> 4) & 0xf
+            num_args = (hdr.num_args >> 0) & 0xf
+            args, _ = args_at_start(rest, arg_size, num_args)
+
+            h = self.qdb.qsr4_messages.get(meta.hash)
+            if h is not None:
+                self.log_message(h.ssid, h.ss_mask, h.line, h.file, h.string, args)
+            else:
+                warning(f'Unmapped terse message (try --qdb): {meta.hash}{self.debug_args(args)}')
         else:
             warning(f'Unhandled message opcode {message_id_to_name.get(opcode, opcode)}')
 
@@ -107,6 +142,89 @@ class MessagePrinter:
     def debug_args(args):
         values = ', '.join(f'{int.from_bytes(arg, 'little', signed=False):#010x}' for arg in args)
         return f'[{values}]'
+
+
+class QdbFile:
+
+    HashedMessage = namedtuple('HashedMessage', ['hash', 'file', 'string'])
+    Qsr4HashedMessage = namedtuple('Qsr4HashedMessage', ['hash', 'ss_mask', 'ssid', 'line', 'file', 'string'])
+
+    QDB_HEADER_SIZE = 0x40
+    TAG_REGEX = re.compile(rb'<(\w+)>(?:\s*(.*?)\s*<[\\/]\1>)?\s*')
+
+
+    def __init__(self):
+
+        self.messages = {}
+        self.qsr4_messages = {}
+
+
+    def parse(self, file):
+
+        qdb_header = file.read(self.QDB_HEADER_SIZE)
+        if len(qdb_header) == self.QDB_HEADER_SIZE and qdb_header.startswith(b'\x7fQDB'):
+            # Compressed `.qdb` file
+            guid = uuid.UUID(bytes=qdb_header[4:20])
+            debug(f'Detected compressed .qdb file with GUID {guid}')
+
+            inner = io.BufferedReader(ZlibReader(file))
+            parsed = self.parse_uncompressed(inner)
+
+            # TODO: check GUID match
+        else:
+            # Not compressed, try to parse directly
+            file.seek(0)
+            parsed = self.parse_uncompressed(file)
+
+        debug(f'Parsed QDB {parsed}')
+        return parsed
+
+
+    def parse_uncompressed(self, file):
+
+        meta = {}
+
+        cur_tag = None
+        expected_close = None
+        for line in file:
+            line = line.rstrip(b'\n')
+            if not line or line.startswith(b'#'):
+                continue
+            elif cur_tag is not None and line.rstrip() in expected_close:
+                cur_tag = None
+                expected_close = None
+            elif cur_tag is None and (match := self.TAG_REGEX.fullmatch(line)):
+                tag, singleline_content = match.groups()
+                if singleline_content is not None:
+                    # Single-line tags contain file metadata
+                    meta[tag] = singleline_content
+                else:
+                    cur_tag = tag
+                    expected_close = [rb'<\%s>' % cur_tag, rb'</%s>' % cur_tag]
+            else:
+                self.process_line(cur_tag, line)
+
+        if cur_tag is not None:
+            raise ValueError('unclosed tag', cur_tag)
+
+        return meta
+
+
+    def process_line(self, tag, line):
+
+        if tag is None:
+            m = self.intify(self.HashedMessage, line.split(b':', 2), ('hash',))
+            self.messages[m.hash] = m
+        elif tag == b'Content':
+            m = self.intify(self.Qsr4HashedMessage, line.split(b':', 5), ('hash', 'ss_mask', 'ssid', 'line'))
+            self.qsr4_messages[m.hash] = m
+
+
+    @staticmethod
+    def intify(tuple_type, tuple_values, to_convert):
+
+        mapped = (int(v) if tuple_type._fields[i] in to_convert else v for i, v in enumerate(tuple_values))
+        return tuple_type._make(mapped)
 
 
 PRINTF_FLAG = [b'#', b'0', b'-', b' ', b'+']
@@ -210,3 +328,35 @@ def cprintf(fmt, args):
         raise IndexError('more arguments than format conversions')
 
     return result
+
+
+class ZlibReader(io.RawIOBase):
+
+    def __init__(self, raw):
+
+        self.raw = raw
+        self.decompressor = zlib.decompressobj()
+
+
+    def readable(self):
+
+        return True
+
+
+    def readinto(self, buf):
+
+        if not len(buf):
+            return 0
+
+        compressed = self.decompressor.unconsumed_tail or self.raw.read(io.DEFAULT_BUFFER_SIZE)
+        decompressed = self.decompressor.decompress(compressed, len(buf))
+
+        buf[:len(decompressed)] = decompressed
+        return len(decompressed)
+
+
+    def close(self):
+
+        self.decompressor = None
+        self.raw.close()
+        return super().close()
