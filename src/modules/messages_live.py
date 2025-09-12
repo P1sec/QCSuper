@@ -89,9 +89,7 @@ class MessagePrinter:
             formatted = cprintf(string, args).decode('ascii', 'replace')
         except IndexError:
             fallback_string = string.decode('ascii', 'replace')
-            fallback_args = ', '.join(f'{int.from_bytes(arg, 'little', signed=False):#010x}' for arg in args)
-
-            formatted = f'{fallback_string} ← [{fallback_args}]'
+            formatted = f'{fallback_string} ← {self.debug_args(args)}'
 
         # Replace newlines with a glyph so that each message appears on a single line
         formatted = formatted.replace('\n', '⏎')
@@ -100,6 +98,12 @@ class MessagePrinter:
         line_spec = f'{file}:{line}'
 
         print(f'[{ssid:5}] {line_spec:44} {formatted}')
+
+
+    @staticmethod
+    def debug_args(args):
+        values = ', '.join(f'{int.from_bytes(arg, 'little', signed=False):#010x}' for arg in args)
+        return f'[{values}]'
 
 
 PRINTF_FLAG = [b'#', b'0', b'-', b' ', b'+']
