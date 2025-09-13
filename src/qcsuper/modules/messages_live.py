@@ -57,20 +57,6 @@ class Qsr4TerseMeta(
     STRUCT = Struct('<IH')
 
 
-def args_at_start(data, arg_size, num_args):
-
-    args_size = arg_size * num_args
-
-    if args_size == 0:
-        return [], data
-
-    # TODO: Catch too few bytes
-    args = [data[i : i + arg_size] for i in range(0, args_size, arg_size)]
-    rest = data[args_size:]
-
-    return args, rest
-
-
 """
     This module collects, formats, and prints modem debugging logs sourced from
     diag MSG events.
@@ -199,6 +185,7 @@ class MessagePrinter:
 
     @staticmethod
     def debug_args(args):
+
         values = ', '.join(
             f'{int.from_bytes(arg, "little", signed=False):#010x}'
             for arg in args
@@ -326,7 +313,6 @@ def cprintf(fmt, args, arg_styler=lambda x: x):
 
     def take_int():
         nonlocal pos
-
         val = None
         while pos < len(fmt) and (c := chr(fmt[pos])).isdigit():
             val = ((val or 0) * 10) + int(c)
@@ -335,7 +321,6 @@ def cprintf(fmt, args, arg_styler=lambda x: x):
 
     def take_token(tokens):
         nonlocal pos
-
         for t in tokens:
             if fmt[pos : pos + len(t)] == t:
                 pos += len(t)
@@ -419,6 +404,20 @@ def cprintf(fmt, args, arg_styler=lambda x: x):
         raise IndexError('more arguments than format conversions')
 
     return result
+
+
+def args_at_start(data, arg_size, num_args):
+
+    args_size = arg_size * num_args
+
+    if args_size == 0:
+        return [], data
+
+    # TODO: Catch too few bytes
+    args = [data[i : i + arg_size] for i in range(0, args_size, arg_size)]
+    rest = data[args_size:]
+
+    return args, rest
 
 
 class ZlibReader(io.RawIOBase):
