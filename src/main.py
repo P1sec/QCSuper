@@ -13,6 +13,7 @@ from .modules.memory_dump import MemoryDumper
 from .modules.cli import CommandLineInterface
 from .modules.dlf_dump import DlfDumper
 from .modules.info import InfoRetriever
+from .modules.messages_live import MessagePrinter
 from .modules._utils import FileType
 
 from .inputs.json_geo_read import JsonGeoReader
@@ -72,6 +73,7 @@ def main():
     modules.add_argument('--json-geo-dump', metavar = 'JSON_FILE', type = FileType('a'), help = 'Generate a JSON file containing both raw log frames and GPS coordinates, for further reprocessing. ' +
         'To be used in combination with --adb.')
     modules.add_argument('--decoded-sibs-dump', action = 'store_true', help = 'Print decoded SIBs to stdout (experimental, requires pycrate).')
+    modules.add_argument('--messages-live', action = 'store_true', help = 'Print modem log messages to stdout.')
 
     pcap_options = parser.add_argument_group(title = 'PCAP generation options', description = 'To be used along with --pcap-dump or --wireshark-live.')
 
@@ -83,6 +85,22 @@ def main():
 
     memory_options.add_argument('--start', metavar = 'MEMORY_START', default = '00000000', help = 'Offset at which to start to dump memory (hex number), by default 00000000.')
     memory_options.add_argument('--stop', metavar = 'MEMORY_STOP', default = 'ffffffff', help = 'Offset at which to stop to dump memory (hex number), by default ffffffff.')
+
+    messages_options = parser.add_argument_group(title = 'Modem log options', description = 'To be used along with --messages-live.')
+
+    def msg_filter(string):
+        parts = [int(x, 0) for x in string.split(':')]
+        if len(parts) == 1:
+            # Enable all mask bits
+            return [parts[0], 0xffffffff]
+        elif len(parts) == 2:
+            return parts
+        else:
+            raise ValueError('message filter must be in the format SUBSYS[:MASK]')
+
+    messages_options.add_argument('--qdb', metavar = 'QSHRINK_DB', type = FileType('rb'), action = 'append', help = 'Optional QShrink database of terse message strings. If specified multiple times, later files take precedence.')
+    messages_options.add_argument('--no-style', action = 'store_true', help = "Don't highlight argument values in bold even when a TTY is present.")
+    messages_options.add_argument('--msg-filter', metavar = 'SUBSYS[:MASK]', type = msg_filter, action = 'append', help = 'Enable messages for the given subsystem. Specify multiple times, or omit to show all messages.')
 
     args = parser.parse_args()
 
@@ -163,6 +181,8 @@ def main():
             diag_input.add_module(InfoRetriever(diag_input))
         if args.dlf_dump:
             diag_input.add_module(DlfDumper(diag_input, args.dlf_dump))
+        if args.messages_live:
+            diag_input.add_module(MessagePrinter(diag_input, args.qdb or [], args.msg_filter, not args.no_style))
 
     # if args.efs_dump:
     #     raise NotImplementedError
