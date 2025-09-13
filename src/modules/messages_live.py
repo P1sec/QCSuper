@@ -9,7 +9,7 @@ import sys
 import uuid
 import zlib
 
-from ..inputs._base_input import message_id_to_name, MSG_EXT_SUBCMD_SET_ALL_RT_MASKS
+from ..inputs._base_input import message_id_to_name, MSG_EXT_SUBCMD_SET_RT_MASK, MSG_EXT_SUBCMD_SET_ALL_RT_MASKS
 
 from ..protocol.messages import *
 
@@ -61,10 +61,11 @@ def args_at_start(data, arg_size, num_args):
 
 class MessagePrinter:
 
-    def __init__(self, diag_input, qshrink_fds, enable_style):
+    def __init__(self, diag_input, qshrink_fds, msg_filters, enable_style):
 
         self.diag_input = diag_input
 
+        self.msg_filters = msg_filters
         self.enable_style = enable_style and sys.stdout.isatty()
 
         self.qdb = QdbFile()
@@ -74,7 +75,11 @@ class MessagePrinter:
 
     def on_init(self):
 
-        self.diag_input.send_recv(DIAG_EXT_MSG_CONFIG_F, pack('<BxxI', MSG_EXT_SUBCMD_SET_ALL_RT_MASKS, 0xffffffff), accept_error = False)
+        if self.msg_filters is None:
+            self.diag_input.send_recv(DIAG_EXT_MSG_CONFIG_F, pack('<BxxI', MSG_EXT_SUBCMD_SET_ALL_RT_MASKS, 0xffffffff), accept_error = False)
+        else:
+            for f in self.msg_filters:
+                self.diag_input.send_recv(DIAG_EXT_MSG_CONFIG_F, pack('<BHHxxI', MSG_EXT_SUBCMD_SET_RT_MASK, f[0], f[0], f[1]), accept_error = False)
 
 
     def on_deinit(self):

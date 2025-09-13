@@ -88,9 +88,19 @@ def main():
 
     messages_options = parser.add_argument_group(title = 'Modem log options', description = 'To be used along with --messages-live.')
 
+    def msg_filter(string):
+        parts = [int(x, 0) for x in string.split(':')]
+        if len(parts) == 1:
+            # Enable all mask bits
+            return [parts[0], 0xffffffff]
+        elif len(parts) == 2:
+            return parts
+        else:
+            raise ValueError('message filter must be in the format SUBSYS[:MASK]')
+
     messages_options.add_argument('--qdb', metavar = 'QSHRINK_DB', type = FileType('rb'), action = 'append', help = 'Optional QShrink database of terse message strings. If specified multiple times, later files take precedence.')
     messages_options.add_argument('--no-style', action = 'store_true', help = "Don't highlight argument values in bold even when a TTY is present.")
-    # TODO: subsystem argument?
+    messages_options.add_argument('--msg-filter', metavar = 'SUBSYS[:MASK]', type = msg_filter, action = 'append', help = 'Enable messages for the given subsystem. Specify multiple times, or omit to show all messages.')
 
     args = parser.parse_args()
 
@@ -172,7 +182,7 @@ def main():
         if args.dlf_dump:
             diag_input.add_module(DlfDumper(diag_input, args.dlf_dump))
         if args.messages_live:
-            diag_input.add_module(MessagePrinter(diag_input, args.qdb or [], not args.no_style))
+            diag_input.add_module(MessagePrinter(diag_input, args.qdb or [], args.msg_filter, not args.no_style))
 
     # if args.efs_dump:
     #     raise NotImplementedError
