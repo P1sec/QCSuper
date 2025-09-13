@@ -217,6 +217,11 @@ def main():
         action='append',
         help='Optional QShrink database of terse message strings. If specified multiple times, later files take precedence.',
     )
+    messages_options.add_argument(
+        '--no-style',
+        action='store_true',
+        help="Don't highlight argument values in bold even when a TTY is present.",
+    )
     # TODO: subsystem argument?
 
     args = parser.parse_args()
@@ -340,7 +345,9 @@ def main():
         if args.dlf_dump:
             diag_input.add_module(DlfDumper(diag_input, args.dlf_dump))
         if args.messages_live:
-            diag_input.add_module(MessagePrinter(diag_input, args.qdb or []))
+            diag_input.add_module(
+                MessagePrinter(diag_input, args.qdb or [], not args.no_style)
+            )
 
     # if args.efs_dump:
     #     raise NotImplementedError

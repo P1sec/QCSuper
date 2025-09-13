@@ -5,6 +5,7 @@ import io
 from logging import warning, debug
 import re
 from struct import Struct, pack  # TODO: Clean up?
+import sys
 import uuid
 import zlib
 
@@ -76,9 +77,11 @@ def args_at_start(data, arg_size, num_args):
 
 
 class MessagePrinter:
-    def __init__(self, diag_input, qshrink_fds):
+    def __init__(self, diag_input, qshrink_fds, enable_style):
 
         self.diag_input = diag_input
+
+        self.enable_style = enable_style and sys.stdout.isatty()
 
         self.qdb = QdbFile()
         for fd in qshrink_fds:
@@ -158,10 +161,14 @@ class MessagePrinter:
     def log_message(self, ssid, ss_mask, line, file, string, args):
 
         try:
-            formatted = cprintf(string, args).decode('ascii', 'replace')
+            formatted = cprintf(string, args, self.bold).decode(
+                'ascii', 'replace'
+            )
         except IndexError:
             fallback_string = string.decode('ascii', 'replace')
-            formatted = f'{fallback_string} ← {self.debug_args(args)}'
+            formatted = (
+                f'{fallback_string} ← {self.bold(self.debug_args(args))}'
+            )
 
         # Replace newlines with a glyph so that each message appears on a single line
         formatted = formatted.replace('\n', '⏎')
@@ -170,6 +177,13 @@ class MessagePrinter:
         line_spec = f'{file}:{line}'
 
         print(f'[{ssid:5}] {line_spec:44} {formatted}')
+
+    def bold(self, text):
+
+        if self.enable_style:
+            return f'\x1b[1m{text}\x1b[0m'
+        else:
+            return text
 
     @staticmethod
     def debug_args(args):
@@ -293,7 +307,7 @@ PRINTF_CONV = [
 ]
 
 
-def cprintf(fmt, args):
+def cprintf(fmt, args, arg_styler=lambda x: x):
 
     result = bytearray()
     pos = 0
@@ -372,7 +386,9 @@ def cprintf(fmt, args):
             py_conv = conv.decode('ascii')
 
             val = int.from_bytes(args.pop(), 'little', signed=signed)
-            formatted = f'%{py_flags}{py_width}{py_precision}{py_conv}' % val
+            formatted = arg_styler(
+                f'%{py_flags}{py_width}{py_precision}{py_conv}' % val
+            )
 
             result.extend(formatted.encode('ascii'))
         elif conv == b'%':
@@ -383,7 +399,7 @@ def cprintf(fmt, args):
             py_conv = conv.decode('ascii')
 
             val = int.from_bytes(args.pop(), 'little', signed=False)
-            formatted = f'%{py_conv}[{val:#010x}]'
+            formatted = arg_styler(f'%{py_conv}[{val:#010x}]')
 
             result.extend(formatted.encode('ascii'))
 
