@@ -4,6 +4,7 @@
 from logging import DEBUG, INFO, basicConfig, error, info, debug, warning
 from argparse import RawTextHelpFormatter
 from argparse import ArgumentParser
+import os
 from os.path import expanduser
 from pathlib import Path
 from sys import stderr
@@ -66,6 +67,8 @@ def main():
     modules.add_argument('--info', action = 'store_true', help = 'Read generic information about the baseband device.')
     modules.add_argument('--pcap-dump', metavar = 'PCAP_FILE', type = FileType('ab'), help = 'Generate a PCAP file containing GSMTAP frames for 2G/3G/4G, to be loaded using Wireshark.')
     modules.add_argument('--wireshark-live', action = 'store_true', help = 'Same as --pcap-dump, but directly spawn a Wireshark instance.')
+    modules.add_argument('--pyshark-live', action = 'store_true', help = 'Same as --pcap-dump, but spawn a custom Pyshark instance.')
+    modules.add_argument('--handover-tracker', action='store_true', help='Find coherent sets of eNodeBs via handover tracking.')
     # modules.add_argument('--efs-dump', metavar = 'OUTPUT_DIR', help = 'Dump the internal EFS filesystem of the device.')
     modules.add_argument('--memory-dump', metavar = 'OUTPUT_DIR', help = 'Dump the memory of the device (may not or partially work with recent devices).')
     modules.add_argument('--dlf-dump', metavar = 'DLF_FILE', type = FileType('ab'), help = 'Generate a DLF file to be loaded using QCSuper or QXDM, with network protocols logging.')
@@ -144,7 +147,11 @@ def main():
         The classes implementing the modules are instancied below.
     """
 
+    global pyshark_processor
+    pyshark_processor = None
+
     def parse_modules_args(args):
+        global pyshark_processor
 
         if args.memory_dump:
             diag_input.add_module(MemoryDumper(diag_input, expanduser(args.memory_dump), int(args.start, 16), int(args.stop, 16)))
@@ -163,6 +170,22 @@ def main():
             diag_input.add_module(InfoRetriever(diag_input))
         if args.dlf_dump:
             diag_input.add_module(DlfDumper(diag_input, args.dlf_dump))
+        if args.pyshark_live:
+            from .modules.pcap_dump import PcapDumper
+            from pyshark_processor import PysharkProcessor, WritePipeAdapter
+            read_end, write_end = os.pipe()
+            pyshark_processor = PysharkProcessor(read_end)
+            pyshark_processor.start()
+            # Wrapper pipe needed so that the attribute .appending_to_file can be read
+            diag_input.add_module(PcapDumper(diag_input, WritePipeAdapter(os.fdopen(write_end, 'wb')), args.reassemble_sibs, args.decrypt_nas, args.include_ip_traffic))
+        if args.handover_tracker:
+            from .modules.enb_tracker import ENBTracker, WritePipeAdapter
+            from .modules.pcap_dump import PcapDumper
+            read_end, write_end = os.pipe()
+            enb_tracker = ENBTracker(read_end, 'cell_map.txt')
+            enb_tracker.start()
+            diag_input.add_module(PcapDumper(diag_input, WritePipeAdapter(os.fdopen(write_end, 'wb')), args.reassemble_sibs, args.decrypt_nas, args.include_ip_traffic))
+
 
     # if args.efs_dump:
     #     raise NotImplementedError
@@ -201,5 +224,7 @@ def main():
         diag_input.run()
     finally:
         diag_input.dispose()
+        if pyshark_processor and pyshark_processor.capture_thread:
+            pyshark_processor.capture_thread.join()
 
     return 0
