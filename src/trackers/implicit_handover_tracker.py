@@ -42,18 +42,13 @@ class ImplicitHandoverTrackingAreaUpdateTracker(Tracker):
             raise ValueError("ImplicitHandoverAreaUpdateTracker requires a CellTracker instance")
 
     def isStart(self, packet):
-        if packet.has_field('lte_rrc_rrcconnectionrequest_element'):
+        if (packet.has_field('lte_rrc_rrcconnectionsetupcomplete_element') or packet.has_field('lte_rrc_ulinformationtransfer_element')) and packet.has_field('nas_eps_nas_msg_emm_type') and packet.nas_eps_nas_msg_emm_type.startswith('0x48'): #Tracking Area Update Request
             return True
 
         return False
 
     def isGoodHandover(self, packet):
-        if packet.has_field('lte_rrc_rrcconnectionsetupcomplete_element'):
-            self.updateCellData() # Update cell as soon as we connect to the new cell
-            self.rrc_complete = True
-        elif packet.has_field('lte_rrc_trackingareaupdaterequest_element'):
-            self.ta_update_started = True
-        elif self.rrc_complete and self.ta_update_started and packet.has_field('lte_rrc_trackingareaupdatecomplete_element'):
+        if packet.has_field('lte_rrc_dlinformationtransfer_element') and (not packet.has_field('nas_eps_nas_msg_emm_type') or not packet.nas_eps_nas_msg_emm_type.startswith('0x4b')): 
             return True
         return False
 

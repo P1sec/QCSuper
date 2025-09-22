@@ -18,6 +18,7 @@ class CellTracker:
             return None
 
         # Example response: +QENG: "servingcell", "NOCONN","LTE","FDD",001,01,1A2D002,2,300,1,3,3,1,-59,-9,-32,18,0,-,81
+        # TODO: Also save the rest, just take the whole line, physCellId, cellId, ARFCN, and then the rest of the line for future-proofness
         # In this case 1A2D002 is the cell ID and 2 is the physical cell ID.
         lines = response.splitlines()
         for line in lines:

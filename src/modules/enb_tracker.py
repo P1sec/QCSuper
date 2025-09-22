@@ -40,6 +40,7 @@ class ENBTracker:
                     for tracker in self.trackers:
                         tracker.consumePacket(rrc_packet)
 
+                    #TODO: Save to file with same name as pcap file
                     self.append_packet_cell_mapping(packet, cell_tracker.get_current_cell(), cellMap)
 
                     #Debug

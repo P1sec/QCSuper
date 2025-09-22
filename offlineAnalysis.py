@@ -9,8 +9,8 @@ def main():
         description="Offline analysis of LTE cell traces given a PCAP file and a cellID <-> packet number mapping file.",
         formatter_class=RawTextHelpFormatter
     )
-    parser.add_argument('--pcap_file', metavar='PCAP_FILE', help='Path to the input PCAP file containing LTE traffic.', required=True)
-    parser.add_argument('--cell_map_file', metavar='CELL_MAP_FILE', help='Path to the cell map file containing packet number to cell ID mappings.', required=True)
+    parser.add_argument('--pcap-file', metavar='PCAP_FILE', help='Path to the input PCAP file containing LTE traffic.', required=True)
+    parser.add_argument('--cell-map-file', metavar='CELL_MAP_FILE', help='Path to the cell map file containing packet number to cell ID mappings.', required=True)
 
     args = parser.parse_args()
 

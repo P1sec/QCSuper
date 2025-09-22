@@ -32,6 +32,7 @@ class Tracker:
             return
         elif self.isBadHandover(packet):
             self.updateCellData()
+            self.resetState()
             self.checkBadCell(self.enb)
 
         #TODO: Conceptualize bad handover
