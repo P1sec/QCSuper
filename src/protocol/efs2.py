@@ -17,6 +17,7 @@ EFS2_ERROR_CODES = {
 }
 
 EFS2_FILE_TYPES = {
+    0o000000: 'Unknown',
     0o010000: 'FIFO (S_IFIFO)',
     0o020000: 'Character device (S_IFCHR)',
     0o040000: 'Directory (S_IFDIR)',
