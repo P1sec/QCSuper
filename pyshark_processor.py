@@ -2,6 +2,8 @@ import pyshark
 from pyshark.capture.pipe_capture import PipeCapture
 import threading
 
+# This is just a testing class for pyshark usage
+
 class PysharkProcessor:
     def __init__(self, pipe_input):
         self.capture = PipeCapture(pipe=pipe_input)

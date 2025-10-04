@@ -5,3 +5,7 @@ build/
 dist/
 *.egg-info
 .~lock.*
+*.pcapng
+design_notes.txt
+pcaps/
+cellMaps/
