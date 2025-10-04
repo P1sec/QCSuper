@@ -30,3 +30,5 @@ If possible, include the --decrypt-nas flag so that Tracking Area Updates are de
 **Offline Analysis** takes two arguments `--pcap-file` and `--cell-map-file` and prints the sets of ENBs on all received packets.
 
 Both the **Live Analysis** and the **Offline Analysis** can be adapted in `offlineAnalysis.py` and `enb_tracker.py` respectively.
+
+**Logging:** The cell sets are written to `stdout` by default. When using the `--handover-verbose flag`, details on bad handovers and unsuccessful cell queries are written to `stderr`

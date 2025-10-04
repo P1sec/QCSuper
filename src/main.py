@@ -36,6 +36,7 @@ def main():
     parser.add_argument('--cli', action = 'store_true', help = 'Use a command prompt, allowing for interactive completion of commands.')
     parser.add_argument('--efs-shell', action = 'store_true', help = 'Spawn an interactive shell to navigate within the embedded filesystem (EFS) of the baseband device.')
     parser.add_argument('-v', '--verbose', action = 'store_true', help = 'Add output for each received or sent Diag packet.')
+    parser.add_argument('--handover-verbose', action = 'store_true', help = 'More detailed logging on bad handovers and cell tracking issues. Written to stderr.')
 
     input_mode = parser.add_argument_group(title = 'Input mode', description = 'Choose an one least input mode for DIAG data.')
 
@@ -182,7 +183,7 @@ def main():
             from .modules.enb_tracker import ENBTracker, WritePipeAdapter
             from .modules.pcap_dump import PcapDumper
             read_end, write_end = os.pipe()
-            enb_tracker = ENBTracker(read_end, 'cell_map.txt' if not args.pcap_dump else os.path.splitext(args.pcap_dump.name)[0] + '_cell_map.txt', args.decrypt_nas, args.verbose)
+            enb_tracker = ENBTracker(read_end, 'cell_map.txt' if not args.pcap_dump else os.path.splitext(args.pcap_dump.name)[0] + '_cell_map.txt', args.decrypt_nas, args.handover_verbose)
             enb_tracker.start()
             diag_input.add_module(PcapDumper(diag_input, WritePipeAdapter(os.fdopen(write_end, 'wb')), args.reassemble_sibs, args.decrypt_nas, args.include_ip_traffic))
 
