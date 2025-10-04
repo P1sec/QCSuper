@@ -13,14 +13,10 @@ class PysharkProcessor:
                 result = packet.number + " " + packet.highest_layer + ": "
                 if 'lte_rrc' in packet:
                     lte_rrc = packet.lte_rrc
-                    if lte_rrc.has_field('lte_rrc_pagingrecord_element'):
-                        result += "Paging Record"
-                    elif lte_rrc.has_field('lte_rrc_systeminformationblocktype1_element'):
-                        result += "SIB1 Record"
-                    elif lte_rrc.has_field('lte_rrc_systeminformation_element'):
-                        result += "SIBX Record"
+                    if lte_rrc.has_field('lte_rrc_rrcconnectionreconfiguration_element') and lte_rrc.has_field('lte_rrc_targetphyscellid'):
+                        result += packet.number + ", Handover Reconfiguration"
                     else: 
-                        result += "Other RRC Record"
+                        result += packet.number + ", Other RRC Record"
                 print(result)
         except Exception as e:
             # This might catch errors when the pipe closes, which can be normal.

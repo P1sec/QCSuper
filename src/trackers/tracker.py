@@ -1,9 +1,10 @@
 # Base tracker class
+import sys
 from src.atutil.celltracker import CellTracker
 
 
 class Tracker:
-    def __init__(self, enb_sets : list[set], current_set: int,  window_size: int, tracker : CellTracker = None):
+    def __init__(self, enb_sets : list[set], current_set: int,  window_size: int, tracker : CellTracker = None, verbose: bool = False):
         self.is_open = False
         self.enb_sets = enb_sets
         self.current_set = current_set
@@ -13,6 +14,7 @@ class Tracker:
         if tracker is None:
             raise ValueError("Tracker requires a CellTracker instance")
         self.enb = None
+        self.verbose = verbose
 
     def consumePacket(self, packet):
         self.current_window_size += 1
@@ -21,6 +23,7 @@ class Tracker:
             return
         
         if not self.is_open:
+            self.updateCellData()
             self.is_open = self.isStart(packet)
             self.current_window_size = 1 if self.is_open else 0
             return
@@ -34,8 +37,8 @@ class Tracker:
             self.updateCellData()
             self.resetState()
             self.checkBadCell(self.enb)
-
-        #TODO: Conceptualize bad handover
+            if self.verbose:
+                print(self.getBadHandoverMessage(), file=sys.stderr)
 
     
     def updateCellData(self):
@@ -69,6 +72,9 @@ class Tracker:
         # new_enb MUST be set before returning True
         pass
 
+    def getBadHandoverMessage(self):
+        pass
+
     def isBadHandover(self, packet):
         # Case: Attach Request with IMSI
         if packet.has_field('nas_eps_nas_msg_emm_type') and packet.nas_eps_nas_msg_emm_type.strip() == '0x41' and (packet.has_field('e212_imsi') or packet.has_field('e212_assoc_imsi')):
@@ -77,7 +83,12 @@ class Tracker:
         # Case: Identity Request for IMSI
         if packet.has_field('nas_eps_nas_msg_emm_type') and packet.nas_eps_nas_msg_emm_type.strip() == '0x55' and packet.has_field('nas_eps_emm_id_type2') and packet.nas_eps_emm_id_type2.strip() == '1':
             return True
+        
+        # Case: Successful attach without IMSI sent. Possible roaming scenario
+        if packet.has_field('nas_msg_emm_type') and packet.nas_msg_emm_type.strip() == '0x43': #Attach Complete
+            return True
         # new_enb MUST be set before returning True
+        
         return False
 
     def resetState(self):

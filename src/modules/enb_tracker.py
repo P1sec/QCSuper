@@ -9,43 +9,44 @@ from src.trackers.reconfiguration_tracker import RRCReconfigurationTracker
 import threading
 
 class ENBTracker:
-    
-    def __init__(self, pipe_input, packet_cell_map_file):
+
+    def __init__(self, pipe_input, packet_cell_map_file, nas_decrypted=False, verbose=False):
         self.capture = PipeCapture(pipe=pipe_input)
         self.capture_thread = None
         self.trackers = []
         self.enb_sets = []
         self.packet_cell_map_file = packet_cell_map_file
+        self.nas_decrypted = nas_decrypted
         if self.packet_cell_map_file is None:
             raise ValueError("ENBTracker requires a valid filename")
-
+        self.verbose = verbose
 
     def process_packets(self):
         try:
             with open(self.packet_cell_map_file, 'a') as cellMap, ATSock() as sock:
-                cell_tracker = CellTracker(sock)
+                cell_tracker = CellTracker(sock, self.verbose)
                 self.init_trackers(cell_tracker)
                 current_cell = cell_tracker.update_current_cell()
                 if current_cell is None:
-                    raise RuntimeError("ENBTracker: Could not get initial cell from CellTracker")
+                    raise RuntimeError("ENBTracker: Could not get initial cell from CellTracker. Check if you have permissions & exclusive access to the AT interface.")
 
                 initial_set = {current_cell}
                 self.enb_sets.append(initial_set)
 
                 for packet in self.capture:
-                    if 'lte_rrc' not in packet:
+                    if 'lte_rrc' not in packet and ('nas-eps' not in packet and self.nas_decrypted):
                         continue
 
-                    rrc_packet = packet.lte_rrc
+                    layer_packet = packet.lte_rrc if 'lte_rrc' in packet else packet['nas-eps']
                     for tracker in self.trackers:
-                        tracker.consumePacket(rrc_packet)
+                        tracker.consumePacket(layer_packet)
 
-                    #TODO: Save to file with same name as pcap file
-                    self.append_packet_cell_mapping(packet, cell_tracker.get_current_cell(), cellMap)
+                    self.append_packet_cell_mapping(packet, cell_tracker, cellMap)
 
                     #Debug
                     for enbset in self.enb_sets:
                         print([cell for cell in enbset])
+                    print()
 
         except Exception as e:
             print(f"Capture loop stopped or an error occurred: {e.with_traceback(tb=None)}")
@@ -65,14 +66,14 @@ class ENBTracker:
             self.capture_thread.join()
 
     def init_trackers(self, cell_tracker):
-        self.trackers.append(ImplicitHandoverServiceRequestTracker(self.enb_sets, 0, 20, cell_tracker))
-        self.trackers.append(ImplicitHandoverTrackingAreaUpdateTracker(self.enb_sets, 0, 20, cell_tracker))
-        self.trackers.append(RRCReestablishmentTracker(self.enb_sets, 0, 10, cell_tracker))
-        self.trackers.append(RRCReconfigurationTracker(self.enb_sets, 0, 10, cell_tracker))
+        self.trackers.append(ImplicitHandoverServiceRequestTracker(self.enb_sets, 0, 20, cell_tracker, self.verbose))
+        self.trackers.append(ImplicitHandoverTrackingAreaUpdateTracker(self.enb_sets, 0, 20, cell_tracker, self.verbose, self.nas_decrypted))
+        self.trackers.append(RRCReestablishmentTracker(self.enb_sets, 0, 10, cell_tracker, self.verbose))
+        self.trackers.append(RRCReconfigurationTracker(self.enb_sets, 0, 10, cell_tracker, self.verbose))
 
-    def append_packet_cell_mapping(self, packet, current_cell, cellMap):
-        if current_cell is not None:
-            cellMap.write(f"{packet.number};{current_cell}\n")
+    def append_packet_cell_mapping(self, packet, cell_tracker : CellTracker, cellMap):
+        if cell_tracker.get_current_cell() is not None:
+            cellMap.write(f"{packet.number};{cell_tracker.get_current_cell()};({cell_tracker.get_full_cell_info()})\n")
 
 class OfflineAnalyzer(ENBTracker):
     def __init__(self, pcap_file, packet_cell_map_file_name):

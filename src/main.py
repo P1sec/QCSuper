@@ -182,7 +182,7 @@ def main():
             from .modules.enb_tracker import ENBTracker, WritePipeAdapter
             from .modules.pcap_dump import PcapDumper
             read_end, write_end = os.pipe()
-            enb_tracker = ENBTracker(read_end, 'cell_map.txt')
+            enb_tracker = ENBTracker(read_end, 'cell_map.txt' if not args.pcap_dump else os.path.splitext(args.pcap_dump.name)[0] + '_cell_map.txt', args.decrypt_nas, args.verbose)
             enb_tracker.start()
             diag_input.add_module(PcapDumper(diag_input, WritePipeAdapter(os.fdopen(write_end, 'wb')), args.reassemble_sibs, args.decrypt_nas, args.include_ip_traffic))
 

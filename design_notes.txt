@@ -1,0 +1,30 @@
+We want to keep track of the attempted handovers and add to our set of real cells if a successful handover to some cell was achieved.
+If the handover was not successful, we add the cell to a "bad" cell list.
+Ideas for scanning for handovers:
+- Feed every packet into a handover tracker, handover trackers have reference to the sets of valid and invalid cells. If a successful handover is made, the tracker puts the new cell into the set.
+    - Must define a "window" of packets in which the handover can be done. E.g. if the handover begins with RRCConnectionReconfiguration and no RRCConnectionReconfigurationComplete comes in another 100 packets, we can consider it failed.
+    - First only define successes and ignore failures. We can later define what counts as a failed handover.
+    
+REMINDER: Use ATSOCK in with block so that it is automatically closed.
+
+If only a Tracking Area update request without a subsequent Service Request, we can't definitively tell if it was successful, as the Tracking Area Update Complete message is ciphered. We CAN however still tell if it was a bad handover if an attach request with IMSI is sent or an RRC Connection Setup is done and an identity request asking for an IMSI is observed. If we don't see this, we can assume it was a good handover.
+To make sure we regularly check if we're in a new cell, we could run a second thread that just pushes "AT+QPING=1,\"8.8.8.8\"\r\n" to the AT interface via echo -e.
+
+TODO: 
+[x] TEST ReconfigurationTracker
+[x] TEST ReestablishmentTracker
+[x] TEST ServiceRequestTracker
+[x] Test OfflineAnalyzer
+[x] Ask Simon & Martin about Tracking Area Update Request Handovers (see above)
+[x] Ask Simon & Martin: In tracker.py, should checkBadCell be ran? If an FBS fully imitates another cell, it would not create a new set
+[x] Ask Simon & Martin: Quectel can't get GPS position. Satellite signals always very weak. Image in Semesterprojekt folder
+[x] Finish TrackingAreaUpdateTracker, match on encrypted message.
+
+[x] Conceptualize Bad Handover Definition
+[x] Implement isBadHandover
+
+[x] Extend the CellID so that it includes EARFCN and the rest of the line
+[x] TEST new cellID
+[x] Save cell_map file with same name as pcap file.
+[x] Write REadme documentation
+[] Go out and Test

@@ -12,3 +12,6 @@ class RRCReconfigurationTracker(Tracker):
         if packet.has_field('lte_rrc_rrcconnectionreconfigurationcomplete_element'):
             return True
         return False
+    
+    def getBadHandoverMessage(self):
+        return "Bad Handover: RRC Reconfiguration did not complete successfully"

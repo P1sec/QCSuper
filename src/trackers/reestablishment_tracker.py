@@ -4,8 +4,8 @@ from src.trackers.tracker import Tracker
 # UE-initiated handovers, e.g. due to radio link failure
 class RRCReestablishmentTracker(Tracker):
 
-    def __init__(self, enb_sets, current_set,  window_size, tracker : CellTracker = None):
-        super().__init__(enb_sets, current_set, window_size, tracker)
+    def __init__(self, enb_sets, current_set,  window_size, tracker : CellTracker = None, verbose: bool = False):
+        super().__init__(enb_sets, current_set, window_size, tracker, verbose)
         if tracker is None:
             raise ValueError("RRCReestablishmentTracker requires a CellTracker instance")
 
@@ -21,3 +21,6 @@ class RRCReestablishmentTracker(Tracker):
         if packet.has_field('lte_rrc_rrcconnectionreestablishmentcomplete_element'):
             return True
         return False
+
+    def getBadHandoverMessage(self):
+        return "Bad Handover: RRC Reestablishment did not complete successfully"    
