@@ -47,6 +47,20 @@ It uses the Qualcomm Diag protocol, also called QCDM or DM (Diagnostic Monitor) 
 
 QCSuper was lately tested and developed on Ubuntu LTS 22.04 and also has been used over Windows 11. It depends on a few Python modules. It is advised to use Linux for better compatibility.
 
+### UV tool installation
+
+If you prefer managing Python CLI tools with [uv](https://docs.astral.sh/uv/), you can install QCSuper together with its Python and bundled binary dependencies directly from a checkout:
+
+```bash
+uv tool install --from . qcsuper
+```
+
+You can also install straight from GitHub without cloning first:
+
+```bash
+uv tool install --from git+https://github.com/P1sec/QCSuper.git qcsuper
+```
+
 To use it, your phone must be rooted or expose a diag service port over USB. In order to check for compatibility with your phone, look up the phone's model on a site like [GSMArena](https://www.gsmarena.com/) and check whether it has a Qualcomm processor.
 
 In order to open PCAP files produced by QCSuper, you can use any Wireshark 2.x - 4.x for 2G/3G frames, but you need at least Wireshark 2.5.x for 4G frames (and 2.6.x for individual NAS messages decrypted out of 4G frames). Ubuntu currently provides a recent enough build for all versions.
