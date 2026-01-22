@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qcsuper"
+version = "2.0.1"
+description = "QCSuper is a tool communicating with Qualcomm-based phones and modems, allowing to capture raw 2G/3G/4G radio frames, among other things"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "P1 Security - Marin Moulinier" }]
+requires-python = ">=3.7"
+dependencies = [
+    "crcmod>=1.7",
+    "pycrate>=0.7.0",
+    "pyserial>=3.5",
+    "pyusb>=1.2.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/P1sec/QCSuper"
+
+[project.scripts]
+qcsuper = "qcsuper.main:main"
+
+[tool.setuptools]
+include-package-data = true
+package-dir = { qcsuper = "src" }
+packages = [
+    "qcsuper",
+    "qcsuper.inputs",
+    "qcsuper.inputs.adb_bridge",
+    "qcsuper.inputs.adb_wsl2_bridge",
+    "qcsuper.inputs.external",
+    "qcsuper.inputs.external.adb",
+    "qcsuper.inputs.external.adb.lib64",
+    "qcsuper.protocol",
+    "qcsuper.modules",
+    "qcsuper.modules.efs_shell_commands",
+]
+
+[tool.setuptools.package-data]
+"qcsuper.inputs.adb_bridge" = ["*"]
+"qcsuper.inputs.adb_wsl2_bridge" = ["*"]
+"qcsuper.inputs.external" = ["*"]
+"qcsuper.inputs.external.adb" = ["*"]
+"qcsuper.inputs.external.adb.lib64" = ["*"]
+"qcsuper.modules" = ["wireshark_plugin/*"]
