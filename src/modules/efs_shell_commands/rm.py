@@ -27,28 +27,27 @@ class RmCommand(BaseEfsShellCommand):
         
     def execute_command(self, diag_input, args : Namespace):
     
-        # First, emit a stat() (EFS2_DIAG_STAT) call in order to understand whether
-        # the remote path input by the user is a directory or not
+        # First, emit an lstat() (EFS2_DIAG_LSTAT) call in order to understand
+        # whether the remote path input by the user is a directory or not
         
         is_directory : bool = False
         
         opcode, payload = diag_input.send_recv(DIAG_SUBSYS_CMD_F, pack('<BH',
             DIAG_SUBSYS_FS, # Command subsystem number
-            EFS2_DIAG_STAT,
+            EFS2_DIAG_LSTAT,
         ) + args.path.encode('latin1').decode('unicode_escape').encode('latin1') + b'\x00', accept_error = True)
         
         if opcode != DIAG_SUBSYS_CMD_F:
     
-            print('Error executing STAT: %s received with payload "%s"' % (message_id_to_name.get(opcode, opcode),
+            print('Error executing LSTAT: %s received with payload "%s"' % (message_id_to_name.get(opcode, opcode),
                 repr(payload)))
             return
     
         (cmd_subsystem_id, subcommand_code,
-            errno, file_mode, file_size, num_links,
-            atime, mtime, ctime) = unpack('<BH7i', payload)
+            errno, file_mode, atime, mtime, ctime) = unpack('<BH5i', payload)
         
         if errno:
-            print('Error executing STAT: %s' % (EFS2_ERROR_CODES.get(errno) or strerror(errno)))
+            print('Error executing LSTAT: %s' % (EFS2_ERROR_CODES.get(errno) or strerror(errno)))
             return
         
         if file_mode & 0o170000 == 0o040000: # S_IFDIR

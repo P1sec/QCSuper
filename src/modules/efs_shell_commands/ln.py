@@ -21,8 +21,8 @@ class LnCommand(BaseEfsShellCommand):
         argument_parser = subparsers_object.add_parser('ln',
             description = "Create an UNIX symbolic link across the remote EFS.")
         
-        argument_parser.add_argument('remote_newlink')
         argument_parser.add_argument('remote_target')
+        argument_parser.add_argument('remote_newlink')
         
         return argument_parser
         
@@ -33,8 +33,8 @@ class LnCommand(BaseEfsShellCommand):
         opcode, payload = diag_input.send_recv(DIAG_SUBSYS_CMD_F, pack('<BH',
             DIAG_SUBSYS_FS, # Command subsystem number
             EFS2_DIAG_SYMLINK,
-        ) + args.remote_newlink.encode('latin1').decode('unicode_escape').encode('latin1') + b'\x00'
-          + args.remote_target.encode('latin1').decode('unicode_escape').encode('latin1') + b'\x00', accept_error = True)
+        ) + args.remote_target.encode('latin1').decode('unicode_escape').encode('latin1') + b'\x00'
+          + args.remote_newlink.encode('latin1').decode('unicode_escape').encode('latin1') + b'\x00', accept_error = True)
         
         if opcode != DIAG_SUBSYS_CMD_F:
             print('Error executing SYMLINK: %s received with payload "%s"' % (
