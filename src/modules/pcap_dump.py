@@ -9,13 +9,13 @@ from shutil import copy2, which
 from logging import warning
 from sys import platform
 import gzip
-
+import sys
+import os
 from ..modules._enable_log_mixin import EnableLogMixin, TYPES_FOR_RAW_PACKET_LOGGING
 from ..modules.decoded_sibs_dump import DecodedSibsDumper
 
 MODULES_DIR = realpath(dirname(__file__))
 SRC_WIRESHARK_PLUGIN_DIR = realpath(MODULES_DIR + '/wireshark_plugin')
-
 
 try:
     from os import setpgrp, getenv, setresgid, setresuid, setgroups, getgrouplist
@@ -37,17 +37,17 @@ from ..protocol.gsmtap import *
 """
 
 class PcapDumper(DecodedSibsDumper):
-    
+
     def __init__(self, diag_input, pcap_file, reassemble_sibs, decrypt_nas, include_ip_traffic):
-        
+
         self.pcap_file = pcap_file
-        
+
         """
             Write a PCAP file header - https://wiki.wireshark.org/Development/LibpcapFileFormat#File_Format
         """
-        
+
         if not self.pcap_file.appending_to_file:
-            
+
             self.pcap_file.write(pack('<IHHi4xII',
                 0xa1b2c3d4, # PCAP Magic
                 2, 4, # Version
@@ -55,22 +55,22 @@ class PcapDumper(DecodedSibsDumper):
                 65535, # Max packet length
                 228 # LINKTYPE_IPV4 (for GSMTAP)
             ))
-        
+
         self.diag_input = diag_input
-        
+
         self.limit_registered_logs = TYPES_FOR_RAW_PACKET_LOGGING
-        
+
         self.current_rat = None # Radio access technology: "2g", "3g", "4g", "5g"
-        
+
         self.reassemble_sibs = reassemble_sibs
         self.decrypt_nas = decrypt_nas
         self.include_ip_traffic = include_ip_traffic
-        
+
         # Install the QCSuper Lua Wireshark plug-in, except if the
         # corresponding environment variable is set.
-        
+
         self.install_wireshark_plugin()
-    
+
     def install_wireshark_plugin(self): # WIP
         
         # See: https://www.wireshark.org/docs/wsug_html_chunked/ChPluginFolders.html
@@ -506,68 +506,86 @@ class PcapDumper(DecodedSibsDumper):
         if getattr(self, 'pcap_file', None):
             self.pcap_file.close()
 
+class StdoutWrapper:
+    def __init__(self, stream):
+        self.stream = stream.buffer
+        self.appending_to_file = False
 
-"""
-    This is the same module, except that il will launch directly a FIFO to
-    Wireshark rather than write the PCAP to a file
-"""
+    def write(self, data):
+        self.stream.write(data)
+        self.stream.flush()
+
+    def close(self):
+        pass
+
+class ExternalAnalyze(PcapDumper):
+    def __init__(self, diag_input, reassemble_sibs, decrypt_nas, include_ip_traffic):
+        stdout_wrapper = StdoutWrapper(sys.stdout)
+        super().__init__(diag_input, stdout_wrapper, reassemble_sibs, decrypt_nas, include_ip_traffic)
+
+class TsharkLive(PcapDumper):
+    def __init__(self, diag_input, reassemble_sibs, decrypt_nas, include_ip_traffic):
+        tshark = which('tshark')
+        if not tshark:
+            raise Exception('Could not find Tshark in $PATH')
+
+        tshark_pipe = Popen([tshark, '-i', '-'], stdin=PIPE)
+        tshark_pipe.stdin.appending_to_file = False
+
+        super().__init__(diag_input, tshark_pipe.stdin, reassemble_sibs, decrypt_nas, include_ip_traffic)
+
+    def __del__(self):
+        self.tshark_pipe.stdin.close()
+        self.tshark_pipe.wait()
 
 class WiresharkLive(PcapDumper):
-
     def __init__(self, diag_input, reassemble_sibs, decrypt_nas, include_ip_traffic):
-        
+
         wireshark = (
             which('C:\\Program Files\\Wireshark\\Wireshark.exe') or
             which('C:\\Program Files (x86)\\Wireshark\\Wireshark.exe') or
             which('wireshark') or
             which('wireshark-gtk')
         )
-        
+
         if not wireshark:
-            
+
             raise Exception('Could not find Wireshark in $PATH')
-        
+
         if not IS_UNIX:
-            
+
             self.detach_process = None
-        
+
         wireshark_pipe = Popen([wireshark, '-k', '-i', '-'],
             stdin = PIPE, stdout = DEVNULL, stderr = STDOUT,
             preexec_fn = self.detach_process,
             bufsize = 0
         ).stdin
-        
+
         wireshark_pipe.appending_to_file = False
-        
+
         super().__init__(diag_input, wireshark_pipe, reassemble_sibs, decrypt_nas, include_ip_traffic)
-    
+
     """
         Executed when we launch a Wireshark process, after fork()
     """
-    
     def detach_process(self):
-        
+
         try:
-            
+
             # Don't be hit by CTRL+C
-            
             setpgrp()
-            
+
             # Drop privileges if needed
-            
             uid, gid = getenv('SUDO_UID'), getenv('SUDO_GID')
-            
+
             if uid and gid:
-                
+
                 uid, gid = int(uid), int(gid)
-
                 setgroups(getgrouplist(getpwuid(uid).pw_name, gid))
-
                 setresgid(gid, gid, -1)
-                
                 setresuid(uid, uid, -1)
-        
+
         except Exception:
-            
             print_exc()
 
