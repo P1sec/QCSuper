@@ -6,7 +6,7 @@ issues: https://github.com/P1sec/QCSuper/issues
 source-code: https://github.com/P1sec/QCSuper
 website: https://www.p1sec.com/blog/presenting-qcsuper-a-tool-for-capturing-your-2g-3g-4g-air-traffic-on-qualcomm-based-phones
 base: core24 # the base snap is the execution environment for this snap
-version: '2.1.1' # just for humans, typically '1.2+git' or '1.3.2'
+version: '2.1.2' # just for humans, typically '1.2+git' or '1.3.2'
 summary: Capture raw 2G/3G/4G frames using Qualcomm-based phones and modems
 description: |
   QCSuper is a tool communicating with Qualcomm-based phones and modems,
@@ -17,33 +17,42 @@ description: |
   Android phone, an USB dongle or an existing capture in another format.
 
 grade: stable
-confinement: classic
+confinement: strict
 
 apps:
   qcsuper:
-    command-chain: [bin/python3.12]
+    extensions: [kde-neon-6]
     command: bin/qcsuper
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/android:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:$SNAP/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     plugs:
+      - network
+      - network-status
+      - qcsuper-usb-plug
       - raw-usb
-      - serial-port
-      - home
+
+plugs:
+  qcsuper-usb-plug:
+    interface: custom-device
+    custom-device: qcsuper-usb-device
+
+slots:
+  qcsuper-usb-slot:
+    interface: custom-device
+    custom-device: qcsuper-usb-device
+    devices:
+      - /dev/ttyUSB[0-9]*
+      - /dev/ttyHS[0-9]*
 
 parts:
   qcsuper:
     plugin: python
-    build-packages:
-      - build-essential
-      - python3-dev
-      - python3-pip
     stage-packages:
-      - libpython3-stdlib
-      - libpython3.12-minimal
-      - libpython3.12-stdlib
-      - python3-venv
-      - python3-minimal
-      - python3-wheel
-      - python3-setuptools
-      - python3.12-minimal
+      - adb
+      - wireshark
+    override-pull: |
+      craftctl default
+
+      rm -f src/qcsuper/inputs/external/adb/* || :
+      rm -f src/qcsuper/inputs/external/adb/lib64/* || :
     source: .
-    build-attributes:
-     - enable-patchelf

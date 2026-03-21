@@ -190,6 +190,9 @@ A few commands you can type are:
 # for compatible phones:
 $ qcsuper --adb --wireshark-live
 
+# ^ this command is equivalent to (prefer this when running as root):
+$ qcsuper --adb --pcap-dump - | wireshark -k -i -
+
 # Same, but dump to a PCAP file instead of opening Wireshark directly
 $ qcsuper --adb --pcap-dump /tmp/my_pcap.pcap
 ```

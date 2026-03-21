@@ -9,7 +9,7 @@ uv tool install poetry
 poetry build -f sdist
 
 py2dsc-deb -x stdeb.cfg --suite resolute --sign-results --sign-key 87EC6DB535CC2A084B41E88EF675C22E1B4B2ACC \
-    --debian-version 1 ../../dist/qcsuper-2.1.1.tar.gz
+    --debian-version 1 ../../dist/qcsuper-2.1.2.tar.gz
 ```
 
 Then, to install the remote package:

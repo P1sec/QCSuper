@@ -56,7 +56,7 @@ wheels = [
 
 [[package]]
 name = "qcsuper"
-version = "2.1.1"
+version = "2.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "crcmod" },

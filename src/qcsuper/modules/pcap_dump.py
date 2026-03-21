@@ -757,8 +757,8 @@ class WiresharkLive(PcapDumper):
         wireshark_pipe = Popen(
             [wireshark, '-k', '-i', '-'],
             stdin=PIPE,
-            stdout=DEVNULL,
-            stderr=STDOUT,
+            # stdout=DEVNULL,
+            # stderr=STDOUT,
             preexec_fn=self.detach_process,
             bufsize=0,
         ).stdin
