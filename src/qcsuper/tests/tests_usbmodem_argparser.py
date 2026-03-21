@@ -4,13 +4,14 @@ from os.path import dirname, realpath
 from unittest import TestCase
 
 TESTS_DIR = dirname(realpath(__file__))
-ROOT_DIR = dirname(TESTS_DIR)
+MODULE_DIR = dirname(TESTS_DIR)
+SRC_DIR = dirname(MODULE_DIR)
 
 import sys
 
-sys.path.insert(0, ROOT_DIR)
+sys.path.insert(0, SRC_DIR)
 
-from src.qcsuper.inputs.usb_modem_argparser import UsbModemArgParser, UsbModemArgType
+from qcsuper.inputs.usb_modem_argparser import UsbModemArgParser, UsbModemArgType
 
 """
     This file is an include file.

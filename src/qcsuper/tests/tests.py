@@ -9,7 +9,10 @@ from unittest import main, TestLoader, TextTestRunner
 loader = TestLoader()
 runner = TextTestRunner(verbosity=2)
 
-import tests_usbmodem_argparser
+try:
+    import tests_usbmodem_argparser
+except ImportError:
+    from qcsuper.tests import tests_usbmodem_argparser
 
 suite = loader.loadTestsFromModule(tests_usbmodem_argparser)
 runner.run(suite)
