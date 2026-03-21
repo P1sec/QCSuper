@@ -29,12 +29,15 @@ apps:
       - network
       - network-status
       - qcsuper-usb-plug
+      - qcsuper-serial-port
       - raw-usb
 
 plugs:
   qcsuper-usb-plug:
     interface: custom-device
     custom-device: qcsuper-usb-device
+  qcsuper-serial-port:
+    interface: serial-port
 
 slots:
   qcsuper-usb-slot:
