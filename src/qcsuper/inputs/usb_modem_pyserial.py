@@ -61,7 +61,10 @@ class UsbModemPyserialConnector(HdlcMixin, BaseInput):
         if geteuid and geteuid() != 0:
             for cmd in ['pkexec', 'sudo'] if getenv('DISPLAY') else ['sudo']:
                 if which(cmd) and access(which(cmd), X_OK):
-                    execlp(cmd, cmd, *argv)
+                    try:
+                        execlp(cmd, cmd, *argv)
+                    except OSError:
+                        continue
                     exit()
 
     def __init__(self, device):
