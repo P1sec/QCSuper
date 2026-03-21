@@ -37,6 +37,8 @@ Issues = "https://github.com/P1sec/QCSuper/issues"
 
 [project.scripts]
 qcsuper = "qcsuper.main:main"
+qcsuper-gui = "qcsuper.ui.gtk_main:main"
+qcsuper-server = "qcsuper.ui.server_main:main"
 
 [tool.poetry]
 name = "qcsuper"
@@ -61,6 +63,8 @@ generate-setup-file = true
 include-package-data = true
 packages = [
     "qcsuper",
+    "qcsuper.ui",
+    "qcsuper.server",
     "qcsuper.inputs",
     "qcsuper.inputs.adb_bridge",
     "qcsuper.inputs.adb_wsl2_bridge",
