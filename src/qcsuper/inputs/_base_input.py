@@ -15,6 +15,7 @@ from ..protocol.messages import *
 
 LOG_CONFIG_DISABLE_OP = 0
 
+MSG_EXT_SUBCMD_SET_RT_MASK = 4
 MSG_EXT_SUBCMD_SET_ALL_RT_MASKS = 5
 MSG_LVL_NONE = 0
 
