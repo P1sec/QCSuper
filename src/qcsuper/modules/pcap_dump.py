@@ -364,6 +364,12 @@ class PcapDumper(DecodedSibsDumper):
                 ext_header[calcsize(header_spec) :],
             )
 
+            # Newer basebands (e.g. SDX75) insert zero padding bytes between
+            # the extended header and the RRC PDU: rely on the declared length
+
+            if 0 < length < len(packet) and not any(packet[: len(packet) - length]):
+                packet = packet[len(packet) - length :]
+
             # GSMTAP definition:
             # - https://github.com/wireshark/wireshark/blob/wireshark-2.5.0/epan/dissectors/packet-gsmtap.h
             # - http://osmocom.org/projects/baseband/wiki/GSMTAP
