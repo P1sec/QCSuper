@@ -46,6 +46,7 @@ local f = {
     sib_mask_in_si8 = ProtoField.uint8('qcdiag.log.nr_rrc.sib_mask_in_si8', 'SIB Mask in SI', base.DEC),
     unknown2 = ProtoField.uint24('qcdiag.log.nr_rrc.unknown2', 'Unknown 2', base.DEC),
     msg_length = ProtoField.uint16('qcdiag.log.nr_rrc.msg_length', 'Message length', base.DEC),
+    unknown_v26 = ProtoField.bytes('qcdiag.log.nr_rrc.unknown_v26', 'Unknown (extra header bytes)'),
 }
 local proto_fields = {}
 for _, v in pairs(f) do proto_fields[#proto_fields + 1] = v end
@@ -97,6 +98,18 @@ local NR_RRC_LOG_DISSECTORS = {
     -- 0x0f-0x12 intentionally absent -> handled by the "data" dissector.
 }
 
+-- Packet version >= 26 (0x1a) renumbers some PDU types. Only the codes
+-- verified against captured RRCSetupRequest / RRCSetupComplete are overridden.
+local NR_RRC_LOG_TYPES_V26 = {
+    [0x07] = 'UL-CCCH',
+    [0x09] = 'UL-DCCH',
+}
+
+local NR_RRC_LOG_DISSECTORS_V26 = {
+    [0x07] = 'nr-rrc.ul.ccch',
+    [0x09] = 'nr-rrc.ul.dcch',
+}
+
 -- 3GPP TS 38.104 NR-ARFCN -> frequency (MHz)
 local function nrarfcn_to_mhz(a)
     if a < 600000 then
@@ -115,12 +128,27 @@ local function safe_get_dissector(name)
     return nil
 end
 
-local function dissect_payload(buffer, packet, tree, payload_offset, raw_pdu_type, raw_msg_length)
+local function pdu_type_name(raw_pdu_type, raw_packet_version)
+    if raw_packet_version and raw_packet_version >= 26 and NR_RRC_LOG_TYPES_V26[raw_pdu_type] then
+        return NR_RRC_LOG_TYPES_V26[raw_pdu_type]
+    end
+    return NR_RRC_LOG_TYPES[raw_pdu_type]
+end
+
+local function pdu_dissector_name(raw_pdu_type, raw_packet_version)
+    if raw_packet_version and raw_packet_version >= 26 and NR_RRC_LOG_DISSECTORS_V26[raw_pdu_type] then
+        return NR_RRC_LOG_DISSECTORS_V26[raw_pdu_type]
+    end
+    return NR_RRC_LOG_DISSECTORS[raw_pdu_type]
+end
+
+local function dissect_payload(buffer, packet, tree, payload_offset, raw_pdu_type, raw_msg_length, raw_packet_version)
     if buffer:len() <= payload_offset then return end
     local payload = buffer(payload_offset):tvb()
     local subdissector = nil
-    if NR_RRC_LOG_DISSECTORS[raw_pdu_type] and raw_msg_length > 1 then
-        subdissector = safe_get_dissector(NR_RRC_LOG_DISSECTORS[raw_pdu_type])
+    local dissector_name = pdu_dissector_name(raw_pdu_type, raw_packet_version)
+    if dissector_name and raw_msg_length > 1 then
+        subdissector = safe_get_dissector(dissector_name)
     end
     if subdissector == nil then
         subdissector = safe_get_dissector('data')
@@ -131,7 +159,7 @@ local function dissect_payload(buffer, packet, tree, payload_offset, raw_pdu_typ
 end
 
 local function set_info(packet, raw_pdu_type, raw_packet_version)
-    local type_name = NR_RRC_LOG_TYPES[raw_pdu_type]
+    local type_name = pdu_type_name(raw_pdu_type, raw_packet_version)
     if type_name then
         packet.cols.info = ('NR RRC OTA: %s'):format(type_name)
     else
@@ -162,18 +190,28 @@ local function dissect_v17(buffer, packet, tree)
     local sfn = buffer(22, 2):le_uint()
     subtree:add_le(f.sfn_subfn, buffer(22, 2))
         :append_text((' (frame %d, subframe %d)'):format(math.floor(sfn / 10), sfn % 10))
+    local raw_packet_version = buffer(0, 1):le_uint()
     local raw_pdu_type = buffer(24, 1):le_uint()
     local pdu_item = subtree:add_le(f.pdu_number, buffer(24, 1))
-    if NR_RRC_LOG_TYPES[raw_pdu_type] then
-        pdu_item:append_text((' (%s)'):format(NR_RRC_LOG_TYPES[raw_pdu_type]))
+    local type_name = pdu_type_name(raw_pdu_type, raw_packet_version)
+    if type_name then
+        pdu_item:append_text((' (%s)'):format(type_name))
     else
         pdu_item:append_text(' (Unknown PDU type)')
     end
     subtree:add_le(f.sib_mask_in_si, buffer(25, 4))
     local raw_msg_length = buffer(29, 2):le_uint()
     subtree:add_le(f.msg_length, buffer(29, 2))
-    set_info(packet, raw_pdu_type, buffer(0, 1):le_uint())
-    dissect_payload(buffer, packet, tree, 31, raw_pdu_type, raw_msg_length)
+    set_info(packet, raw_pdu_type, raw_packet_version)
+    -- Newer versions (e.g. 26 / 0x1a) insert extra bytes between the message
+    -- length and the payload (35-byte header), so locate the payload from the
+    -- end of the buffer using the message length when it is consistent.
+    local payload_offset = 31
+    if raw_msg_length > 0 and buffer:len() - raw_msg_length > 31 then
+        payload_offset = buffer:len() - raw_msg_length
+        subtree:add(f.unknown_v26, buffer(31, payload_offset - 31))
+    end
+    dissect_payload(buffer, packet, tree, payload_offset, raw_pdu_type, raw_msg_length, raw_packet_version)
 end
 
 -- Original layout for packet versions < 17
